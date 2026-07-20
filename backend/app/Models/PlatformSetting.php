@@ -8,6 +8,7 @@ class PlatformSetting extends Model
 {
     protected $fillable = [
         'default_commission_rate',
+        'voucher_contribution_rate',
         'voucher_wash_threshold',
         'voucher_amount',
         'voucher_expiry_days',
@@ -17,6 +18,7 @@ class PlatformSetting extends Model
     {
         return [
             'default_commission_rate' => 'decimal:2',
+            'voucher_contribution_rate' => 'decimal:2',
             'voucher_amount' => 'decimal:2',
         ];
     }

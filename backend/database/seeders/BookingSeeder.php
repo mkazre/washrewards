@@ -10,6 +10,7 @@ use App\Models\Tenant;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Voucher;
+use App\Services\Payments\CommissionSplitCalculator;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -182,20 +183,17 @@ class BookingSeeder extends Seeder
 
     private function ledgerEntry(Booking $booking): void
     {
-        $gross = (float) $booking->total_amount;
-        $commission = round($gross * 0.12, 2);
-        $voucherContribution = round($gross * 0.03, 2);
-        $partnerEarnings = round($gross - $commission - $voucherContribution, 2);
+        $split = (new CommissionSplitCalculator)->calculate($booking);
 
         Transaction::updateOrCreate(
             ['booking_id' => $booking->id],
             [
                 'tenant_id' => $booking->tenant_id,
                 'user_id' => $booking->user_id,
-                'gross_amount' => $gross,
-                'platform_commission' => $commission,
-                'voucher_contribution' => $voucherContribution,
-                'partner_earnings' => $partnerEarnings,
+                'gross_amount' => $split->grossAmount,
+                'platform_commission' => $split->platformCommission,
+                'voucher_contribution' => $split->voucherContribution,
+                'partner_earnings' => $split->partnerEarnings,
                 'gateway' => 'payfast',
                 'gateway_reference' => 'PF-'.strtoupper(Str::random(10)),
                 'status' => 'completed',

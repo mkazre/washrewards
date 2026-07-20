@@ -17,6 +17,12 @@ class PlatformSettingForm
                     ->suffix('%')
                     ->helperText('Applied when a tenant has no commission override')
                     ->default(15.0),
+                TextInput::make('voucher_contribution_rate')
+                    ->required()
+                    ->numeric()
+                    ->suffix('%')
+                    ->helperText('Share of the platform commission (not gross) that funds the loyalty voucher pool')
+                    ->default(20.0),
                 TextInput::make('voucher_wash_threshold')
                     ->required()
                     ->numeric()

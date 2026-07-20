@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Partner\BookingController as PartnerBookingControll
 use App\Http\Controllers\Api\Partner\DashboardController as PartnerDashboardController;
 use App\Http\Controllers\Api\Partner\PromotionController as PartnerPromotionController;
 use App\Http\Controllers\Api\Partner\ServiceController as PartnerServiceController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\VehicleController;
@@ -33,6 +34,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::post('/bookings', [BookingController::class, 'store']);
     Route::get('/bookings/{booking}', [BookingController::class, 'show']);
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel']);
+    Route::post('/bookings/{booking}/pay', [PaymentController::class, 'pay']);
     Route::post('/bookings/{booking}/review', [ReviewController::class, 'store']);
 
     Route::get('/vouchers', [VoucherController::class, 'index']);

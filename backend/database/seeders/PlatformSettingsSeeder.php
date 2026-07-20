@@ -11,6 +11,7 @@ class PlatformSettingsSeeder extends Seeder
     {
         PlatformSetting::query()->firstOrCreate([], [
             'default_commission_rate' => 15.00,
+            'voucher_contribution_rate' => 20.00,
             'voucher_wash_threshold' => 5,
             'voucher_amount' => 100.00,
             'voucher_expiry_days' => 90,

@@ -60,6 +60,7 @@ all tenants' data.
 
 - `app/Models` — `User`, `Tenant`, `Vehicle`, `Service`, `Booking`, `Review`,
   `Promotion`, `Transaction`, `Settlement`, `Voucher`, `PlatformSetting`
+- `app/Http/Controllers/Api` — the mobile API (consumer + partner, role-based)
 - `app/Filament/Resources` — one admin resource per model above, grouped into
   **Platform** (tenants, users, settings), **Operations** (bookings, services,
   vehicles, reviews, promotions), **Finance** (transactions, settlements,
@@ -68,10 +69,35 @@ all tenants' data.
   SA.dc.html`): the four car washes, their packages, demo bookings, reviews,
   and a loyalty voucher
 
+## Payments & settlement
+
+The platform is **collect-and-settle**: the customer pays in-app, the
+platform holds funds, and each tenant is paid out on a schedule.
+
+- `App\Payments\Contracts\PaymentGateway` — interface business logic depends
+  on. **No real SA gateway is wired in yet** (PayFast / Peach Payments /
+  Paystack / Yoco / Ozow — still an open decision per the tech spec). Until
+  one is chosen and its API keys are available,
+  `App\Payments\Drivers\SandboxGateway` stands in and always succeeds
+  synchronously with a `SANDBOX-` reference — set `PAYMENT_GATEWAY` in `.env`
+  to switch drivers once a real one is added.
+- `POST /api/bookings/{booking}/pay` — charges via the configured gateway,
+  then atomically: marks the booking paid, writes a `Transaction` ledger
+  entry (via `App\Services\Payments\CommissionSplitCalculator` — commission
+  is charged on the service price only, never the mobile-wash travel fee),
+  and checks `App\Services\Loyalty\LoyaltyService` for a newly-earned R100
+  voucher.
+- `php artisan settlements:generate [--date=Y-m-d]` — batches each tenant's
+  completed, unsettled transactions for a day into a `Settlement`. Scheduled
+  daily at 01:00 (`routes/console.php`). Mark a settlement paid from the
+  admin panel (Finance → Settlements → "Mark as paid").
+- `php artisan vouchers:expire` — flips active vouchers past `expires_at` to
+  `expired`. Scheduled daily at 01:15.
+
 ## What's next
 
-This is Phase 1 (foundation) of the delivery plan in
-`docs/WashRewards-SA-Technical-Specification.md`: Laravel skeleton, Sanctum
-auth, multi-tenancy foundation, and the core schema. Later phases build out
-the full mobile API, payment gateway integration (collect-and-settle with
-scheduled per-tenant payouts), and the Terraform/ECS deployment pipeline.
+Phases 1–3 of the delivery plan in
+`docs/WashRewards-SA-Technical-Specification.md` are done: Laravel skeleton,
+Sanctum auth, multi-tenancy, core schema, the full mobile API, and payments/
+settlement (behind the sandbox gateway above). What's left: swap in the real
+payment gateway once chosen, and the Terraform/ECS deployment pipeline.
