@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #d9dde3; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+  .wr-scroll::-webkit-scrollbar { width: 0; height: 0; }
+  @keyframes wrPop { 0% { transform: scale(.82); opacity: 0; } 60% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes wrUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes wrToast { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+<script src="image-slot.js"></script>
+</helmet>
+
+<div style="width:393px;height:852px;background:#F5F6F8;border-radius:46px;position:relative;overflow:hidden;display:flex;flex-direction:column;font-family:'Inter',sans-serif;color:#0B1626;box-shadow:0 34px 80px rgba(9,24,48,.4),0 0 0 11px #0a0f18,0 0 0 12px #20262e;">
+
+  <div style="height:50px;flex:none;background:#091830;display:flex;align-items:flex-end;justify-content:space-between;padding:0 28px 9px;color:#fff;z-index:5;">
+    <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;letter-spacing:.02em;">9:41</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="#fff"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12px;">5G</span>
+      <svg width="26" height="13" viewBox="0 0 26 13" fill="none"><rect x="1" y="1" width="21" height="11" rx="3" stroke="#fff" stroke-opacity=".5" stroke-width="1.2"/><rect x="2.6" y="2.6" width="17" height="7.8" rx="1.6" fill="#fff"/><rect x="23.2" y="4" width="2" height="5" rx="1" fill="#fff" fill-opacity=".6"/></svg>
+    </div>
+  </div>
+
+  <div class="wr-scroll" style="flex:1;overflow-y:auto;position:relative;">
+
+    <!-- HOME -->
+    <sc-if value="{{ showHome }}" hint-placeholder-val="{{ true }}">
+    <div style="">
+      <div style="background:#091830;padding:8px 22px 96px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#2463EB,#1b3f9e);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;color:#fff;font-size:17px;">SD</div>
+            <div>
+              <div style="color:#7E8DA6;font-size:12.5px;">Welcome back</div>
+              <div style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Sanele Dlamini</div>
+            </div>
+          </div>
+          <div onClick="{{ openNotifs }}" style="width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;" style-hover="background:rgba(255,255,255,.13);">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+            <span style="position:absolute;top:9px;right:10px;width:8px;height:8px;border-radius:50%;background:#F59E0B;border:2px solid #091830;"></span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:9px 13px;width:fit-content;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9DB0D4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14l-1.6-6.6a2 2 0 0 0-1.95-1.4H8.55a2 2 0 0 0-1.95 1.4L5 17z"/><circle cx="7.5" cy="17.5" r="1.7"/><circle cx="16.5" cy="17.5" r="1.7"/></svg>
+          <span style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;">{{ vehicleName }}</span>
+          <span style="width:4px;height:4px;border-radius:50%;background:#7E8DA6;"></span>
+          <span style="color:#9DB0D4;font-size:12.5px;letter-spacing:.02em;">{{ vehiclePlate }}</span>
+        </div>
+      </div>
+
+      <div style="padding:0 22px;margin-top:-80px;">
+        <div style="border-radius:24px;padding:22px 22px 20px;background:linear-gradient(135deg,#0E2347 0%,#13294f 52%,#1d3470 100%);position:relative;overflow:hidden;box-shadow:0 20px 44px rgba(9,24,48,.45);">
+          <div style="position:absolute;top:-46px;right:-34px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.5),transparent 68%);"></div>
+          <div style="position:relative;display:flex;align-items:flex-start;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <div style="width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#F59E0B,#FBBF24);"></div>
+              <span style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;letter-spacing:.01em;">WashRewards</span>
+            </div>
+            <span style="background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#091830;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.09em;padding:6px 11px;border-radius:999px;">{{ voucherCount }} VOUCHER</span>
+          </div>
+          <div style="position:relative;margin-top:24px;">
+            <div style="color:#9DB0D4;font-size:12px;letter-spacing:.04em;text-transform:uppercase;">Voucher balance</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
+              <span style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:46px;line-height:1;">{{ voucherBalance }}</span>
+              <span style="color:#F59E0B;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;">ready</span>
+            </div>
+          </div>
+          <div style="position:relative;margin-top:22px;display:flex;align-items:flex-end;justify-content:space-between;">
+            <div style="color:#C6D2E8;font-family:'Space Grotesk',sans-serif;font-size:15px;letter-spacing:.16em;">•••• 4827</div>
+            <svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="#F59E0B" stroke-width="1.6" stroke-linecap="round" opacity=".85"><path d="M7 5a10 10 0 0 1 0 12"/><path d="M12 1a16 16 0 0 1 0 20"/><path d="M17 -3a22 22 0 0 1 0 28" transform="translate(0,0)"/></svg>
+          </div>
+        </div>
+
+        <button onClick="{{ openBooking }}" style="width:100%;margin-top:18px;background:#2463EB;color:#fff;border:none;border-radius:16px;padding:17px;font-size:16px;font-weight:600;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;box-shadow:0 12px 26px rgba(36,99,235,.34);" style-hover="background:#1d54ce;" style-active="transform:translateY(1px);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5S5 9.6 5 14.3a7 7 0 0 0 14 0C19 9.6 12 2.5 12 2.5z"/></svg>
+          Book a Wash
+        </button>
+
+        <div style="margin-top:14px;background:#fff;border:1px solid #F1E7CE;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:9px;">
+              <span style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;color:#091830;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;">R</span>
+              <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">R100 voucher progress</span>
+            </div>
+            <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;color:#B45309;">{{ washCount }}/5</span>
+          </div>
+          <div style="display:flex;gap:9px;margin-top:14px;align-items:center;">
+            <sc-for list="{{ washDots }}" as="d" hint-placeholder-count="5">
+              <div style="flex:1;height:13px;border-radius:999px;{{ d.dotStyle }}"></div>
+            </sc-for>
+          </div>
+          <div style="margin-top:11px;color:#6B7787;font-size:12px;">{{ washRemaining }} more washes to earn a R100 voucher — redeemable at any partner.</div>
+        </div>
+
+        <div onClick="{{ openRating }}" style="margin-top:12px;display:flex;align-items:center;gap:13px;background:#091830;border-radius:18px;padding:14px 16px;cursor:pointer;" style-hover="opacity:.94;">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;background:rgba(245,158,11,.18);display:flex;align-items:center;justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">Rate your recent wash</div>
+            <div style="color:#9DB0D4;font-size:12px;margin-top:2px;">{{ lastWashPkg }} · {{ lastWashPartner }}</div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6E80A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </div>
+      </div>
+
+      <div style="padding:24px 22px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h3 style="margin:0;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;">Nearby car washes</h3>
+          <div style="display:flex;background:#EAEDF2;border-radius:11px;padding:3px;gap:2px;">
+            <button onClick="{{ setListView }}" style="border:none;border-radius:9px;padding:6px 13px;font-size:12.5px;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;transition:all .15s;{{ listToggleStyle }}">List</button>
+            <button onClick="{{ setMapView }}" style="border:none;border-radius:9px;padding:6px 13px;font-size:12.5px;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;transition:all .15s;{{ mapToggleStyle }}">Map</button>
+          </div>
+        </div>
+
+        <sc-if value="{{ mapView }}">
+        <div style="position:relative;height:340px;border-radius:20px;overflow:hidden;border:1px solid #E3E8EF;background:
+          linear-gradient(0deg,rgba(255,255,255,.7),rgba(255,255,255,.7)),
+          repeating-linear-gradient(0deg,#D6DEE8 0 2px,transparent 2px 58px),
+          repeating-linear-gradient(90deg,#D6DEE8 0 2px,transparent 2px 70px),
+          #E9EEF4;">
+          <div style="position:absolute;top:14%;left:-5%;width:55%;height:30%;background:#D8E8D6;border-radius:0 18px 18px 0;opacity:.85;"></div>
+          <div style="position:absolute;bottom:-6%;right:-8%;width:48%;height:34%;background:#CFE0EE;border-radius:18px 0 0 0;opacity:.9;"></div>
+          <div style="position:absolute;top:6px;left:6px;background:rgba(255,255,255,.85);backdrop-filter:blur(4px);border-radius:9px;padding:5px 10px;font-family:'Space Grotesk',sans-serif;font-size:10.5px;font-weight:600;color:#5C6B7D;">Johannesburg</div>
+          <div style="position:absolute;top:46%;left:48%;transform:translate(-50%,-50%);">
+            <span style="position:absolute;inset:-9px;border-radius:50%;background:rgba(36,99,235,.18);"></span>
+            <span style="position:relative;display:block;width:15px;height:15px;border-radius:50%;background:#2463EB;border:3px solid #fff;box-shadow:0 2px 6px rgba(9,24,48,.3);"></span>
+          </div>
+          <sc-for list="{{ mapPins }}" as="m" hint-placeholder-count="4">
+            <div onClick="{{ m.onOpen }}" style="position:absolute;top:{{ m.top }};left:{{ m.left }};transform:translate(-50%,-100%);cursor:pointer;display:flex;flex-direction:column;align-items:center;">
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;padding:5px 10px;border-radius:999px;box-shadow:0 6px 16px rgba(9,24,48,.22);white-space:nowrap;{{ m.pinStyle }}">{{ m.price }}</div>
+              <div style="width:11px;height:11px;border-radius:0 50% 50% 50%;transform:rotate(45deg);margin-top:-3px;{{ m.pinStyle }}"></div>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ listView }}">
+        <sc-for list="{{ partners }}" as="p" hint-placeholder-count="4">
+          <div onClick="{{ p.onOpen }}" style="display:flex;gap:14px;align-items:center;background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:12px;margin-bottom:12px;cursor:pointer;box-shadow:0 2px 8px rgba(9,24,48,.04);" style-hover="border-color:#C9D6F5;box-shadow:0 6px 16px rgba(9,24,48,.08);">
+            <image-slot id="{{ p.slotId }}" shape="rounded" radius="14" placeholder="Photo" style="width:62px;height:62px;flex:none;font-family:monospace;font-size:7.5px;"></image-slot>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;">{{ p.name }}</div>
+              <div style="display:flex;align-items:center;gap:5px;color:#6B7787;font-size:12.5px;margin-top:3px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9AA5B1" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                {{ p.area }}
+              </div>
+              <div style="display:flex;align-items:center;gap:7px;margin-top:8px;font-size:12.5px;color:#6B7787;">
+                <span style="display:flex;align-items:center;gap:3px;color:#0B1626;font-weight:600;font-family:'Space Grotesk',sans-serif;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  {{ p.rating }}
+                </span>
+                <span style="color:#D2D8E0;">·</span>
+                <span>{{ p.dist }}</span>
+                <span style="color:#D2D8E0;">·</span>
+                <span>from {{ p.price }}</span>
+              </div>
+            </div>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C2CAD4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </div>
+        </sc-for>
+        </sc-if>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- REWARDS -->
+    <sc-if value="{{ showRewards }}">
+    <div style="">
+      <div style="background:#091830;padding:12px 22px 24px;">
+        <h2 style="margin:0 0 18px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:20px;color:#fff;">Rewards</h2>
+        <div style="color:#9DB0D4;font-size:12px;letter-spacing:.04em;text-transform:uppercase;">Voucher balance</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
+          <span style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:40px;line-height:1;">{{ voucherBalance }}</span>
+          <span style="color:#F59E0B;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">ready</span>
+        </div>
+        <div style="margin-top:14px;color:#C6D2E8;font-size:12.5px;">{{ voucherCount }} voucher ready to redeem · earn a R100 voucher every 5 paid washes.</div>
+      </div>
+
+      <div style="padding:22px;">
+        <h3 style="margin:0 0 12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Your R100 voucher</h3>
+        <div style="background:linear-gradient(135deg,#0E2347,#1d3470);border-radius:18px;padding:18px;position:relative;overflow:hidden;box-shadow:0 10px 26px rgba(9,24,48,.25);">
+          <div style="position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.4),transparent 70%);"></div>
+          <div style="position:relative;display:flex;align-items:center;justify-content:space-between;">
+            <span style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">{{ washCount }} of 5 washes</span>
+            <span style="background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#091830;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10.5px;letter-spacing:.06em;padding:5px 10px;border-radius:999px;">R100 REWARD</span>
+          </div>
+          <div style="position:relative;display:flex;gap:9px;margin-top:14px;align-items:center;">
+            <sc-for list="{{ washDots }}" as="d" hint-placeholder-count="5">
+              <div style="flex:1;height:13px;border-radius:999px;{{ d.dotStyle }}"></div>
+            </sc-for>
+          </div>
+          <div style="position:relative;margin-top:11px;color:#C6D2E8;font-size:12.5px;">{{ washRemaining }} more paid washes to unlock your next R100 voucher.</div>
+        </div>
+
+        <div style="display:flex;gap:14px;align-items:center;background:#fff;border:1px solid #F4E3BE;border-radius:18px;padding:14px;margin-top:12px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <div style="width:48px;height:48px;border-radius:14px;flex:none;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;color:#091830;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;">R100</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;">R100 Wash Voucher</div>
+            <div style="color:#6B7787;font-size:12px;margin-top:2px;">Earned · expires in 54 days · any partner</div>
+          </div>
+          <button onClick="{{ redeemVoucher }}" style="flex:none;background:#2463EB;color:#fff;border:none;border-radius:11px;padding:9px 15px;font-size:13px;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;" style-hover="background:#1d54ce;">Redeem</button>
+        </div>
+
+        <h3 style="margin:24px 0 6px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Recent activity</h3>
+        <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:4px 16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <sc-for list="{{ txns }}" as="t" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:13px;padding:14px 0;border-bottom:1px solid #F2F4F7;">
+              <div style="width:38px;height:38px;border-radius:11px;flex:none;background:#F1F4F9;display:flex;align-items:center;justify-content:center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5C6B7D" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14l-1.5-6.5a2 2 0 0 0-2-1.5H8.5a2 2 0 0 0-2 1.5L5 17z"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/></svg>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ t.title }}</div>
+                <div style="color:#8A95A3;font-size:11.5px;margin-top:2px;">{{ t.sub }}</div>
+              </div>
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;color:{{ t.color }};">{{ t.amount }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- PARTNER DASHBOARD -->
+    <sc-if value="{{ showPartner }}">
+    <div style="">
+      <div style="background:#091830;padding:12px 22px 22px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <image-slot id="partner-logo" shape="rounded" radius="13" placeholder="Logo" style="width:46px;height:46px;flex:none;font-family:monospace;font-size:7px;"></image-slot>
+            <div>
+              <div style="color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;">Sparkle &amp; Shine</div>
+              <div style="color:#7E8DA6;font-size:12.5px;">Sandton City · Partner</div>
+            </div>
+          </div>
+          <span style="background:rgba(245,158,11,.16);color:#F59E0B;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:10.5px;letter-spacing:.06em;padding:6px 10px;border-radius:999px;">BUSINESS</span>
+        </div>
+      </div>
+
+      <div style="padding:20px 22px 22px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="grid-column:1/-1;background:linear-gradient(135deg,#0E2347,#1d3470);border-radius:20px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 14px 32px rgba(9,24,48,.3);">
+            <div style="position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;background:radial-gradient(circle,rgba(245,158,11,.4),transparent 70%);"></div>
+            <div style="position:relative;color:#9DB0D4;font-size:12px;letter-spacing:.04em;text-transform:uppercase;">Revenue settled</div>
+            <div style="position:relative;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:32px;margin-top:4px;">R48,920</div>
+            <div style="position:relative;margin-top:6px;color:#C6D2E8;font-size:12.5px;">This month · <span style="color:#34D399;font-weight:600;">+12%</span> vs May</div>
+          </div>
+          <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+            <div style="color:#8A95A3;font-size:12px;">Today's bookings</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;margin-top:4px;">14</div>
+            <div style="color:#2463EB;font-size:12px;font-weight:600;margin-top:2px;">3 upcoming</div>
+          </div>
+          <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+            <div style="color:#8A95A3;font-size:12px;">Customers / month</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;margin-top:4px;">312</div>
+            <div style="color:#16A34A;font-size:12px;font-weight:600;margin-top:2px;">+28 new</div>
+          </div>
+          <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+            <div style="color:#8A95A3;font-size:12px;">QR sign-ups</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;margin-top:4px;">{{ qrSignups }}</div>
+            <div style="color:#2463EB;font-size:12px;font-weight:600;margin-top:2px;">via your poster</div>
+          </div>
+          <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+            <div style="color:#8A95A3;font-size:12px;">Avg rating</div>
+            <div style="display:flex;align-items:center;gap:5px;margin-top:4px;">
+              <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;">4.8</span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            </div>
+            <div style="color:#16A34A;font-size:12px;font-weight:600;margin-top:2px;">Top rated</div>
+          </div>
+        </div>
+
+        <h3 style="margin:24px 0 12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Today's bookings</h3>
+        <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:4px 16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <sc-for list="{{ todayBookings }}" as="b" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid #F2F4F7;">
+              <div style="background:#EEF3FF;color:#2463EB;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;padding:7px 10px;border-radius:10px;flex:none;">{{ b.time }}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ b.name }}</div>
+                <div style="color:#8A95A3;font-size:11.5px;margin-top:2px;">{{ b.pkg }} · {{ b.price }}</div>
+              </div>
+              <sc-if value="{{ b.hasAction }}">
+                <button onClick="{{ b.onAdvance }}" style="flex:none;background:#EEF3FF;color:#2463EB;border:1px solid #CFE0FF;border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;" style-hover="background:#DFE9FF;">{{ b.action }}</button>
+              </sc-if>
+              <sc-if value="{{ b.isDone }}">
+                <span style="flex:none;display:flex;align-items:center;gap:4px;background:#E7F6EC;color:#16A34A;border-radius:10px;padding:7px 11px;font-size:12px;font-weight:600;font-family:'Space Grotesk',sans-serif;">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Done
+                </span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <h3 style="margin:24px 0 12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Recent reviews</h3>
+        <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:24px;">4.8</span>
+            <div style="display:flex;gap:2px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            </div>
+            <span style="margin-left:auto;color:#8A95A3;font-size:12px;">326 reviews</span>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #F2F4F7;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;">Naledi M.</span>
+              <span style="display:flex;align-items:center;gap:3px;background:#E7F6EC;color:#16A34A;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:600;font-family:'Space Grotesk',sans-serif;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Verified
+              </span>
+              <span style="margin-left:auto;color:#A6B0BC;font-size:11.5px;">2 days ago</span>
+            </div>
+            <div style="color:#5A6675;font-size:12.5px;margin-top:7px;line-height:1.45;">Spotless finish and done in 40 minutes. Booking made it effortless.</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;">
+          <button onClick="{{ manageServices }}" style="background:#fff;border:1px solid #E6EAF0;border-radius:16px;padding:15px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;cursor:pointer;box-shadow:0 2px 8px rgba(9,24,48,.04);" style-hover="border-color:#C9D6F5;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2463EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V20a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 18.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.7 7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H10a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V10a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+            <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;color:#0B1626;text-align:left;">Manage services</span>
+          </button>
+          <button onClick="{{ runPromo }}" style="background:#fff;border:1px solid #E6EAF0;border-radius:16px;padding:15px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;cursor:pointer;box-shadow:0 2px 8px rgba(9,24,48,.04);" style-hover="border-color:#C9D6F5;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-6-6 18-3.5-7.5L3 11z"/></svg>
+            <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;color:#0B1626;text-align:left;">Promotions</span>
+          </button>
+        </div>
+
+        <button onClick="{{ viewAnalytics }}" style="width:100%;margin-top:14px;background:#091830;color:#fff;border:none;border-radius:16px;padding:16px;font-size:15px;font-weight:600;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;box-shadow:0 12px 26px rgba(9,24,48,.28);" style-hover="background:#0e2347;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+          View Analytics
+        </button>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- BOOKING FORM -->
+    <sc-if value="{{ showForm }}">
+    <div style="background:#fff;min-height:100%;">
+      <div style="height:196px;position:relative;">
+        <image-slot id="wash-hero" shape="rect" placeholder="Drop storefront photo" style="position:absolute;inset:0;width:100%;height:100%;font-family:monospace;font-size:10px;"></image-slot>
+        <button onClick="{{ closeBooking }}" style="position:absolute;top:16px;left:16px;width:40px;height:40px;border-radius:13px;border:none;background:rgba(9,24,48,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <div style="position:absolute;bottom:16px;right:16px;background:rgba(22,163,74,.92);color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:11.5px;padding:6px 11px;border-radius:999px;display:flex;align-items:center;gap:6px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:#fff;"></span>Open now
+        </div>
+      </div>
+
+      <div style="padding:20px 22px 24px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <div>
+            <h2 style="margin:0;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;">{{ partnerName }}</h2>
+            <div style="display:flex;align-items:center;gap:7px;margin-top:5px;color:#6B7787;font-size:13px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9AA5B1" stroke-width="1.8"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ partnerArea }} · {{ partnerDist }}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;background:#FFF7E8;color:#B45309;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;padding:7px 11px;border-radius:11px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            {{ partnerRating }}
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-top:18px;background:#F7F8FA;border:1px solid #EEF0F4;border-radius:14px;padding:12px 14px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5C6B7D" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14l-1.6-6.6a2 2 0 0 0-1.95-1.4H8.55a2 2 0 0 0-1.95 1.4L5 17z"/><circle cx="7.5" cy="17.5" r="1.7"/><circle cx="16.5" cy="17.5" r="1.7"/></svg>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11.5px;color:#8A95A3;">Vehicle</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">{{ vehicleName }} · {{ vehiclePlate }}</div>
+          </div>
+          <span style="color:#2463EB;font-size:12.5px;font-weight:600;cursor:pointer;">Change</span>
+        </div>
+
+        <h3 style="margin:24px 0 12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Choose a package</h3>
+        <sc-for list="{{ packages }}" as="pk" hint-placeholder-count="3">
+          <div onClick="{{ pk.onSelect }}" style="display:flex;gap:14px;align-items:center;border-radius:18px;padding:15px;margin-bottom:12px;cursor:pointer;transition:all .16s ease;{{ pk.cardStyle }}">
+            <div style="width:24px;height:24px;border-radius:50%;border:2px solid;flex:none;display:flex;align-items:center;justify-content:center;{{ pk.radioStyle }}">
+              <sc-if value="{{ pk.selected }}">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              </sc-if>
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;">{{ pk.name }}</span>
+                <sc-if value="{{ pk.popular }}"><span style="background:#091830;color:#F59E0B;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:9.5px;letter-spacing:.06em;padding:3px 7px;border-radius:6px;">POPULAR</span></sc-if>
+              </div>
+              <div style="color:#6B7787;font-size:12.5px;margin-top:3px;">{{ pk.desc }}</div>
+              <div style="color:#9AA5B1;font-size:11.5px;margin-top:4px;">≈ {{ pk.time }}</div>
+            </div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;flex:none;">{{ pk.price }}</div>
+          </div>
+        </sc-for>
+
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin:24px 0 12px;">
+          <h3 style="margin:0;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Available today</h3>
+          <span style="color:#8A95A3;font-size:12.5px;">Mon, 23 Jun</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+          <sc-for list="{{ slots }}" as="s" hint-placeholder-count="6">
+            <button onClick="{{ s.onSelect }}" style="padding:13px 0;border-radius:12px;border:1.5px solid;font-weight:600;font-family:'Space Grotesk',sans-serif;font-size:14px;transition:all .14s ease;cursor:pointer;{{ s.chipStyle }}">{{ s.label }}</button>
+          </sc-for>
+        </div>
+
+        <h3 style="margin:26px 0 12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Verified reviews</h3>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:30px;line-height:1;">{{ partnerRating }}</div>
+          <div>
+            <div style="display:flex;gap:2px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            </div>
+            <div style="color:#8A95A3;font-size:12px;margin-top:3px;">{{ partnerReviewCount }} verified reviews</div>
+          </div>
+        </div>
+        <sc-for list="{{ partnerReviews }}" as="rv" hint-placeholder-count="2">
+          <div style="background:#fff;border:1px solid #EEF0F4;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ rv.name }}</span>
+              <span style="display:flex;align-items:center;gap:3px;background:#E7F6EC;color:#16A34A;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:600;font-family:'Space Grotesk',sans-serif;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Verified
+              </span>
+              <span style="margin-left:auto;color:#A6B0BC;font-size:11.5px;">{{ rv.when }}</span>
+            </div>
+            <div style="display:flex;gap:2px;margin-top:8px;">
+              <sc-for list="{{ rv.starArr }}" as="st" hint-placeholder-count="5">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="{{ st.fill }}"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              </sc-for>
+            </div>
+            <div style="color:#5A6675;font-size:12.5px;margin-top:8px;line-height:1.45;">{{ rv.text }}</div>
+          </div>
+        </sc-for>
+
+        <h3 style="margin:26px 0 12px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">Payment method</h3>
+        <sc-for list="{{ payMethods }}" as="pm" hint-placeholder-count="3">
+          <div onClick="{{ pm.onSelect }}" style="display:flex;align-items:center;gap:13px;border-radius:16px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s ease;{{ pm.cardStyle }}">
+            <div style="width:42px;height:30px;border-radius:7px;flex:none;background:#091830;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;letter-spacing:.02em;">{{ pm.brand }}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ pm.label }}</div>
+              <div style="color:#8A95A3;font-size:12px;margin-top:2px;">{{ pm.num }}</div>
+            </div>
+            <div style="width:22px;height:22px;border-radius:50%;border:2px solid;flex:none;display:flex;align-items:center;justify-content:center;{{ pm.radioStyle }}">
+              <sc-if value="{{ pm.selected }}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+        <div style="display:flex;align-items:center;gap:7px;margin-top:4px;color:#8A95A3;font-size:11.5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9AA5B1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          Payments are encrypted and PCI-DSS secured.
+        </div>
+      </div>
+
+      <div style="position:sticky;bottom:0;background:#fff;border-top:1px solid #ECEEF2;padding:14px 22px 24px;box-shadow:0 -8px 24px rgba(9,24,48,.06);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div>
+            <div style="color:#8A95A3;font-size:12px;">{{ selPkgName }} · {{ selSlot }}</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;">{{ selPkgPrice }}</div>
+          </div>
+          <div style="color:#16A34A;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px;">
+            <span style="width:14px;height:14px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:inline-block;"></span>
+            Counts toward R100 voucher
+          </div>
+        </div>
+        <button onClick="{{ confirmBooking }}" style="width:100%;background:#2463EB;color:#fff;border:none;border-radius:16px;padding:17px;font-size:16px;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;box-shadow:0 12px 26px rgba(36,99,235,.34);" style-hover="background:#1d54ce;" style-active="transform:translateY(1px);">Confirm &amp; Pay {{ selPkgPrice }}</button>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- CONFIRMATION -->
+    <sc-if value="{{ showConfirmed }}">
+    <div style="background:#fff;min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;text-align:center;">
+      <div style="width:96px;height:96px;border-radius:50%;background:#EAF1FF;display:flex;align-items:center;justify-content:center;animation:wrPop .45s cubic-bezier(.2,.9,.3,1.2);position:relative;">
+        <div style="position:absolute;inset:-7px;border-radius:50%;border:3px solid #F59E0B;opacity:.35;"></div>
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#2463EB" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h2 style="margin:24px 0 8px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:23px;">Payment successful</h2>
+      <p style="margin:0;color:#6B7787;font-size:14px;max-width:252px;line-height:1.5;">Your wash is booked and paid. A digital receipt has been saved to your app.</p>
+
+      <div style="width:100%;margin-top:24px;background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:18px;text-align:left;box-shadow:0 2px 10px rgba(9,24,48,.05);">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;border-bottom:1px dashed #DCE2EA;">
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13px;">Digital receipt</span>
+          <span style="color:#8A95A3;font-size:12px;font-family:'Space Grotesk',sans-serif;">#{{ receiptNo }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:#8A95A3;font-size:13px;">Partner</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ partnerName }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:#8A95A3;font-size:13px;">Vehicle</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ vehicleName }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:#8A95A3;font-size:13px;">Package</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ selPkgName }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:#8A95A3;font-size:13px;">Today at</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ selSlot }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;">
+          <span style="color:#8A95A3;font-size:13px;">Paid via</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:13.5px;">{{ selPayLabel }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;margin-top:4px;border-top:1px solid #ECEEF2;">
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">Amount paid</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;color:#2463EB;">{{ selPkgPrice }}</span>
+        </div>
+      </div>
+
+      <div style="width:100%;margin-top:14px;display:flex;align-items:center;gap:11px;background:#FFF7E8;border:1px solid #F4E3BE;border-radius:14px;padding:13px 15px;text-align:left;">
+        <span style="width:24px;height:24px;border-radius:50%;flex:none;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;color:#091830;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;">R</span>
+        <div style="font-size:12.5px;color:#7A5A1E;line-height:1.45;"><strong style="font-family:'Space Grotesk',sans-serif;">Wash {{ washNext }} of 5 complete.</strong> Reach 5 paid washes to earn your next R100 voucher.</div>
+      </div>
+
+      <button onClick="{{ closeBooking }}" style="width:100%;margin-top:18px;background:#2463EB;color:#fff;border:none;border-radius:16px;padding:17px;font-size:16px;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;box-shadow:0 12px 26px rgba(36,99,235,.34);" style-hover="background:#1d54ce;">Done</button>
+    </div>
+    </sc-if>
+
+    <!-- NOTIFICATIONS -->
+    <sc-if value="{{ showNotifs }}">
+    <div style="background:#F5F6F8;min-height:100%;">
+      <div style="background:#091830;padding:10px 18px 18px;display:flex;align-items:center;gap:12px;">
+        <button onClick="{{ closeNotifs }}" style="width:38px;height:38px;border-radius:12px;border:none;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;" style-hover="background:rgba(255,255,255,.15);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <h2 style="margin:0;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;color:#fff;flex:1;">Notifications</h2>
+        <span style="color:#7E9BE0;font-size:12.5px;font-weight:600;cursor:pointer;">Mark all read</span>
+      </div>
+
+      <div style="padding:18px 20px 24px;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#8A95A3;margin-bottom:10px;">Today</div>
+
+        <div style="display:flex;gap:13px;background:#fff;border:1px solid #EEF0F4;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;background:#EAF1FF;display:flex;align-items:center;justify-content:center;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2463EB" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">Booking confirmed</div>
+            <div style="color:#6B7787;font-size:12.5px;margin-top:3px;line-height:1.45;">Full Valet at Sparkle &amp; Shine is booked for today, 14:00.</div>
+            <div style="color:#A6B0BC;font-size:11px;margin-top:6px;">2 min ago</div>
+          </div>
+          <span style="width:8px;height:8px;border-radius:50%;background:#2463EB;flex:none;margin-top:4px;"></span>
+        </div>
+
+        <div style="display:flex;gap:13px;background:#fff;border:1px solid #EEF0F4;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;background:linear-gradient(135deg,#FEF3DC,#FDE9BE);display:flex;align-items:center;justify-content:center;">
+            <span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#FBBF24);"></span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">Wash counted</div>
+            <div style="color:#6B7787;font-size:12.5px;margin-top:3px;line-height:1.45;">Your Full Valet counts toward your next R100 voucher — 3 of 5 washes done.</div>
+            <div style="color:#A6B0BC;font-size:11px;margin-top:6px;">2 min ago</div>
+          </div>
+          <span style="width:8px;height:8px;border-radius:50%;background:#2463EB;flex:none;margin-top:4px;"></span>
+        </div>
+
+        <div style="display:flex;gap:13px;background:#fff;border:1px solid #EEF0F4;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;background:linear-gradient(135deg,#FEF3DC,#FDE9BE);display:flex;align-items:center;justify-content:center;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#B45309" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><line x1="12" y1="8" x2="12" y2="21"/><path d="M12 8C12 8 10 3.5 7.2 4.4 5 5.1 6.4 8 9 8z"/><path d="M12 8C12 8 14 3.5 16.8 4.4 19 5.1 17.6 8 15 8z"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">R100 voucher ready</div>
+            <div style="color:#6B7787;font-size:12.5px;margin-top:3px;line-height:1.45;">You have a R100 voucher ready to redeem at any participating partner.</div>
+            <div style="color:#A6B0BC;font-size:11px;margin-top:6px;">1 hour ago</div>
+          </div>
+        </div>
+
+        <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#8A95A3;margin:20px 0 10px;">Earlier this week</div>
+
+        <div style="display:flex;gap:13px;background:#fff;border:1px solid #EEF0F4;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;background:#EEF1F6;display:flex;align-items:center;justify-content:center;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">Almost there!</div>
+            <div style="color:#6B7787;font-size:12.5px;margin-top:3px;line-height:1.45;">Two more paid washes and you'll earn another R100 voucher.</div>
+            <div style="color:#A6B0BC;font-size:11px;margin-top:6px;">Mon</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:13px;background:#fff;border:1px solid #EEF0F4;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <div style="width:40px;height:40px;border-radius:12px;flex:none;background:#EAF1FF;display:flex;align-items:center;justify-content:center;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#2463EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4L11 3.8V3H4v7l9.6 9.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8z"/><circle cx="7.5" cy="6.5" r="1.2"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;">Weekend offer</div>
+            <div style="color:#6B7787;font-size:12.5px;margin-top:3px;line-height:1.45;">AquaJet Auto Spa: 20% off all packages this weekend only.</div>
+            <div style="color:#A6B0BC;font-size:11px;margin-top:6px;">Sun</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- RATING -->
+    <sc-if value="{{ showRating }}">
+    <div style="background:#F5F6F8;min-height:100%;">
+      <div style="background:#091830;padding:10px 18px 18px;display:flex;align-items:center;gap:12px;">
+        <button onClick="{{ closeRating }}" style="width:38px;height:38px;border-radius:12px;border:none;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;" style-hover="background:rgba(255,255,255,.15);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+        </button>
+        <h2 style="margin:0;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;color:#fff;">Rate your wash</h2>
+      </div>
+
+      <div style="padding:20px 20px 28px;">
+        <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:18px;box-shadow:0 2px 8px rgba(9,24,48,.04);text-align:center;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;">{{ lastWashPkg }}</div>
+          <div style="color:#6B7787;font-size:13px;margin-top:3px;">{{ lastWashPartner }}</div>
+          <div style="display:inline-flex;align-items:center;gap:4px;margin-top:10px;background:#E7F6EC;color:#16A34A;border-radius:999px;padding:4px 10px;font-size:11px;font-weight:600;font-family:'Space Grotesk',sans-serif;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Verified — paid wash completed
+          </div>
+          <div style="display:flex;gap:10px;justify-content:center;margin:18px 0 4px;">
+            <sc-for list="{{ ratingStarRow }}" as="st" hint-placeholder-count="5">
+              <svg onClick="{{ st.onSelect }}" width="38" height="38" viewBox="0 0 24 24" fill="{{ st.fill }}" style="cursor:pointer;transition:fill .12s ease;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+            </sc-for>
+          </div>
+          <div style="color:#9AA5B1;font-size:12px;">Tap to rate your overall experience</div>
+        </div>
+
+        <h3 style="margin:22px 0 6px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;">Rate the details</h3>
+        <div style="background:#fff;border:1px solid #EEF0F4;border-radius:18px;padding:4px 16px;box-shadow:0 2px 8px rgba(9,24,48,.04);">
+          <sc-for list="{{ ratingCatRows }}" as="rc" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #F2F4F7;">
+              <span style="font-size:13.5px;font-family:'Space Grotesk',sans-serif;font-weight:500;">{{ rc.name }}</span>
+              <div style="display:flex;gap:5px;">
+                <sc-for list="{{ rc.stars }}" as="st" hint-placeholder-count="5">
+                  <svg onClick="{{ st.onSelect }}" width="20" height="20" viewBox="0 0 24 24" fill="{{ st.fill }}" style="cursor:pointer;transition:fill .12s ease;"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <h3 style="margin:22px 0 8px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;">Add a review <span style="color:#9AA5B1;font-weight:400;font-size:12.5px;">(optional)</span></h3>
+        <textarea placeholder="Share what stood out about your wash…" style="width:100%;height:88px;resize:none;border:1px solid #E2E6EC;border-radius:14px;padding:13px;font-family:'Inter',sans-serif;font-size:13.5px;color:#0B1626;outline:none;background:#fff;" style-focus="border-color:#2463EB;"></textarea>
+
+        <button onClick="{{ submitRating }}" style="width:100%;margin-top:16px;color:#fff;border:none;border-radius:16px;padding:17px;font-size:16px;font-weight:600;font-family:'Space Grotesk',sans-serif;box-shadow:0 12px 26px rgba(36,99,235,.3);{{ submitStyle }}">Submit review</button>
+        <div style="text-align:center;color:#9AA5B1;font-size:11.5px;margin-top:10px;">Only customers who completed a paid wash can review.</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ toast }}">
+      <div style="position:absolute;left:22px;right:22px;bottom:18px;background:#091830;color:#fff;border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:10px;font-size:13.5px;font-family:'Space Grotesk',sans-serif;font-weight:500;box-shadow:0 14px 30px rgba(9,24,48,.4);animation:wrToast .25s ease;z-index:20;">
+        <span style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#FBBF24);display:flex;align-items:center;justify-content:center;flex:none;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#091830" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </span>
+        {{ toast }}
+      </div>
+    </sc-if>
+
+  </div>
+
+  <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+  <div style="flex:none;background:#fff;border-top:1px solid #ECEEF2;padding:10px 26px 26px;display:flex;justify-content:space-between;z-index:5;">
+    <button onClick="{{ goHome }}" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex:1;">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ navHome }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-7v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span style="font-size:11px;font-weight:600;font-family:'Space Grotesk',sans-serif;color:{{ navHome }};">Home</span>
+    </button>
+    <button onClick="{{ goRewards }}" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex:1;">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ navRewards }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v9h14v-9"/><line x1="12" y1="8" x2="12" y2="21"/><path d="M12 8C12 8 10 3.5 7.2 4.4 5 5.1 6.4 8 9 8z"/><path d="M12 8C12 8 14 3.5 16.8 4.4 19 5.1 17.6 8 15 8z"/></svg>
+      <span style="font-size:11px;font-weight:600;font-family:'Space Grotesk',sans-serif;color:{{ navRewards }};">Rewards</span>
+    </button>
+    <button onClick="{{ goPartner }}" style="background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex:1;">
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="{{ navPartner }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7.5" width="19" height="13" rx="2"/><path d="M8.5 7.5V5.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v2"/></svg>
+      <span style="font-size:11px;font-weight:600;font-family:'Space Grotesk',sans-serif;color:{{ navPartner }};">Partner</span>
+    </button>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:393,&quot;height&quot;:852},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;rewards&quot;,&quot;partner&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.partners = [
+      { name: 'Sparkle & Shine', area: 'Sandton City', rating: '4.8', dist: '1.2 km', price: 'R59' },
+      { name: 'AquaJet Auto Spa', area: 'Rosebank', rating: '4.6', dist: '2.4 km', price: 'R49' },
+      { name: 'Prestige Wash Co.', area: 'Melrose Arch', rating: '4.9', dist: '3.1 km', price: 'R75' },
+      { name: 'DriveClean Express', area: 'Braamfontein', rating: '4.4', dist: '4.5 km', price: 'R45' },
+    ];
+    this.packages = [
+      { name: 'Basic Wash', desc: 'Exterior wash & hand dry', price: 'R59', time: '20 min', earn: '59' },
+      { name: 'Full Valet', desc: 'Interior + exterior + wax', price: 'R189', time: '45 min', earn: '189', popular: true },
+      { name: 'Premium Detail', desc: 'Deep clean, polish & ceramic protect', price: 'R349', time: '90 min', earn: '349' },
+    ];
+    this.slots = [
+      { label: '09:30' }, { label: '11:00' }, { label: '12:30', disabled: true },
+      { label: '14:00' }, { label: '15:30' }, { label: '17:00' },
+    ];
+    this.rewards = [
+      { name: 'Free Basic Wash', desc: 'Redeem at any partner', cost: '1,500' },
+      { name: '50% Off Full Valet', desc: 'One-time voucher', cost: '900' },
+      { name: 'R100 Partner Discount', desc: 'Selected partners', cost: '600' },
+    ];
+    this.txns = [
+      { title: 'Full Valet', sub: 'Sparkle & Shine · 12 Jun', amount: 'R189', kind: 'spend' },
+      { title: 'Basic Wash', sub: 'DriveClean Express · 5 Jun', amount: 'R59', kind: 'spend' },
+      { title: 'R100 voucher earned', sub: 'After 5 washes · 28 May', amount: '+R100', kind: 'reward' },
+      { title: 'Premium Detail', sub: 'Prestige Wash Co. · 20 May', amount: 'R349', kind: 'spend' },
+    ];
+    this.todayBookings = [
+      { time: '09:30', name: 'Thabo M.', pkg: 'Full Valet', price: 'R189' },
+      { time: '11:00', name: 'Lerato K.', pkg: 'Basic Wash', price: 'R59' },
+      { time: '12:30', name: 'Sipho N.', pkg: 'Premium Detail', price: 'R349' },
+      { time: '14:00', name: 'Aisha P.', pkg: 'Full Valet', price: 'R189' },
+    ];
+    this.vehicle = { name: 'VW Polo Vivo', plate: 'FH 21 RT GP' };
+    this.payMethods = [
+      { brand: 'VISA', last: '4827', label: 'Visa' },
+      { brand: 'MC', last: '1190', label: 'Mastercard' },
+      { brand: 'EFT', last: '', label: 'Instant EFT' },
+    ];
+    this.partnerReviews = [
+      { name: 'Naledi M.', stars: 5, when: '2 days ago', text: 'Spotless finish and done in 40 minutes. Booking made it effortless.' },
+      { name: 'Johan V.', stars: 5, when: '5 days ago', text: 'Great value valet — staff were professional and friendly.' },
+    ];
+    this.ratingCats = ['Cleanliness', 'Staff professionalism', 'Value for money', 'Waiting time'];
+    this.lastWash = { partner: 'Prestige Wash Co.', pkg: 'Premium Detail' };
+    this.state = {
+      tab: props.startScreen || 'home', booking: false, partner: this.partners[0], pkg: 1, slot: 0,
+      confirmed: false, toast: null, mapView: false, notifs: false,
+      pay: 0, rating: false, stars: 0, cats: {}, washCount: 3,
+      bStatus: ['Completed', 'Arrived', 'Upcoming', 'Upcoming'],
+    };
+  }
+
+  go(tab) { this.setState({ tab, booking: false, confirmed: false, notifs: false }); }
+  open(p) { this.setState({ booking: true, partner: p, confirmed: false, pkg: 1, slot: 0, notifs: false }); }
+  close() { this.setState({ booking: false, confirmed: false }); }
+  openNotifs() { this.setState({ notifs: true }); }
+  closeNotifs() { this.setState({ notifs: false }); }
+  setMap(v) { this.setState({ mapView: v }); }
+  setPay(i) { this.setState({ pay: i }); }
+  openRating() { this.setState({ rating: true, stars: 0, cats: {} }); }
+  closeRating() { this.setState({ rating: false }); }
+  setStars(n) { this.setState({ stars: n }); }
+  setCat(cat, n) { this.setState(s => ({ cats: { ...s.cats, [cat]: n } })); }
+  submitRating() {
+    this.setState({ rating: false, toast: 'Review submitted · Verified' });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2400);
+  }
+  flash(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2400);
+  }
+  advanceBooking(i) {
+    const next = { Upcoming: 'Arrived', Arrived: 'Completed', Completed: 'Completed' };
+    this.setState(s => { const b = [...s.bStatus]; b[i] = next[b[i]]; return { bStatus: b }; });
+  }
+  confirm() { if (this.slots[this.state.slot].disabled) return; this.setState({ confirmed: true }); }
+  redeem(name) {
+    this.setState({ toast: 'Redeemed · ' + name });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2400);
+  }
+
+  renderVals() {
+    const s = this.state;
+    const slotIds = ['p-sparkle', 'p-aquajet', 'p-prestige', 'p-driveclean'];
+    const pos = [
+      { top: '26%', left: '40%' }, { top: '50%', left: '21%' },
+      { top: '38%', left: '70%' }, { top: '68%', left: '55%' },
+    ];
+    const partners = this.partners.map((p, i) => ({ ...p, slotId: slotIds[i], onOpen: () => this.open(p) }));
+    const mapPins = this.partners.map((p, i) => ({
+      name: p.name, price: p.price, featured: i === 0,
+      top: pos[i].top, left: pos[i].left,
+      onOpen: () => this.open(p),
+      pinStyle: i === 0
+        ? 'background:linear-gradient(135deg,#F59E0B,#FBBF24);color:#091830;'
+        : 'background:#2463EB;color:#fff;',
+    }));
+    const packages = this.packages.map((p, i) => ({
+      ...p,
+      selected: i === s.pkg,
+      onSelect: () => this.setState({ pkg: i }),
+      cardStyle: i === s.pkg
+        ? 'border:1.5px solid #2463EB;background:#F4F7FF;box-shadow:0 6px 18px rgba(36,99,235,.12);'
+        : 'border:1.5px solid #ECEEF2;background:#fff;',
+      radioStyle: i === s.pkg
+        ? 'border-color:#2463EB;background:#2463EB;'
+        : 'border-color:#CBD2DC;background:#fff;',
+    }));
+    const slots = this.slots.map((sl, i) => ({
+      ...sl,
+      onSelect: () => { if (!sl.disabled) this.setState({ slot: i }); },
+      chipStyle: sl.disabled
+        ? 'background:#F1F3F6;color:#AEB6C0;border-color:#F1F3F6;cursor:not-allowed;text-decoration:line-through;'
+        : (i === s.slot
+          ? 'background:#2463EB;color:#fff;border-color:#2463EB;box-shadow:0 6px 16px rgba(36,99,235,.25);'
+          : 'background:#fff;color:#0B1626;border-color:#E2E6EC;'),
+    }));
+    const rewards = this.rewards.map(r => ({ ...r, onRedeem: () => this.redeem(r.name) }));
+    const txns = this.txns.map(t => ({ ...t, color: t.kind === 'reward' ? '#16A34A' : '#0B1626' }));
+    const sel = this.packages[s.pkg];
+    const slot = this.slots[s.slot];
+    const payMethods = this.payMethods.map((p, i) => ({
+      ...p, num: p.last ? '•••• ' + p.last : 'Pay from your bank',
+      selected: i === s.pay,
+      onSelect: () => this.setPay(i),
+      radioStyle: i === s.pay ? 'border-color:#2463EB;background:#2463EB;' : 'border-color:#CBD2DC;background:#fff;',
+      cardStyle: i === s.pay ? 'border:1.5px solid #2463EB;background:#F4F7FF;' : 'border:1.5px solid #ECEEF2;background:#fff;',
+    }));
+    const pm = this.payMethods[s.pay];
+    const selPayLabel = pm.last ? pm.label + ' •••• ' + pm.last : pm.label;
+    const washDots = Array.from({ length: 5 }, (_, i) => ({
+      dotStyle: i < s.washCount
+        ? 'background:linear-gradient(135deg,#F59E0B,#FBBF24);box-shadow:0 2px 6px rgba(245,158,11,.4);'
+        : 'background:transparent;border:1.5px dashed #C9D2DE;',
+    }));
+    const partnerReviews = this.partnerReviews.map(r => ({
+      ...r, starArr: [1, 2, 3, 4, 5].map(n => ({ fill: r.stars >= n ? '#F59E0B' : '#DCE1E8' })),
+    }));
+    const ratingStarRow = [1, 2, 3, 4, 5].map(n => ({ fill: s.stars >= n ? '#F59E0B' : '#DCE1E8', onSelect: () => this.setStars(n) }));
+    const ratingCatRows = this.ratingCats.map(c => ({
+      name: c,
+      stars: [1, 2, 3, 4, 5].map(n => ({ fill: (s.cats[c] || 0) >= n ? '#F59E0B' : '#DCE1E8', onSelect: () => this.setCat(c, n) })),
+    }));
+    const stMeta = {
+      Completed: { chip: 'background:#E7F6EC;color:#16A34A;', action: null },
+      Arrived: { chip: 'background:#EAF1FF;color:#2463EB;', action: 'Mark done' },
+      Upcoming: { chip: 'background:#EEF1F6;color:#6B7787;', action: 'Check in' },
+    };
+    const todayBookings = this.todayBookings.map((b, i) => {
+      const st = s.bStatus[i], m = stMeta[st];
+      return { ...b, status: st, statusStyle: m.chip, action: m.action, hasAction: !!m.action, isDone: st === 'Completed', onAdvance: () => this.advanceBooking(i) };
+    });
+    return {
+      tab: s.tab, booking: s.booking, toast: s.toast, mapView: s.mapView, listView: !s.mapView,
+      showHome: !s.booking && !s.notifs && !s.rating && s.tab === 'home',
+      showRewards: !s.booking && !s.notifs && !s.rating && s.tab === 'rewards',
+      showPartner: !s.booking && !s.notifs && !s.rating && s.tab === 'partner',
+      showForm: s.booking && !s.confirmed && !s.rating,
+      showConfirmed: s.booking && s.confirmed,
+      showNotifs: s.notifs && !s.rating,
+      showRating: s.rating,
+      showNav: !s.booking && !s.notifs && !s.rating,
+      vehicleName: this.vehicle.name, vehiclePlate: this.vehicle.plate,
+      washDots, washCount: s.washCount, washRemaining: 5 - s.washCount, washNext: Math.min(s.washCount + 1, 5),
+      payMethods, selPayLabel, receiptNo: 'WR-24819',
+      partnerReviews, partnerReviewCount: '326',
+      ratingStarRow, ratingCatRows, ratingCanSubmit: s.stars > 0,
+      submitStyle: s.stars > 0 ? 'background:#2463EB;cursor:pointer;' : 'background:#AEC3EE;cursor:not-allowed;',
+      openRating: () => this.openRating(), closeRating: () => this.closeRating(), submitRating: () => this.submitRating(),
+      lastWashPartner: this.lastWash.partner, lastWashPkg: this.lastWash.pkg,
+      todayBookings, qrSignups: '86',
+      redeemVoucher: () => this.redeem('R100 Wash Voucher'),
+      manageServices: () => this.flash('Services & pricing editor opens here'),
+      runPromo: () => this.flash('Promotion builder opens here'),
+      viewAnalytics: () => this.flash('Full analytics dashboard opens here'),
+      openNotifs: () => this.openNotifs(), closeNotifs: () => this.closeNotifs(),
+      setListView: () => this.setMap(false), setMapView: () => this.setMap(true),
+      mapPins,
+      listToggleStyle: !s.mapView ? 'background:#fff;color:#091830;box-shadow:0 2px 6px rgba(9,24,48,.12);' : 'background:transparent;color:#7E8DA6;',
+      mapToggleStyle: s.mapView ? 'background:#fff;color:#091830;box-shadow:0 2px 6px rgba(9,24,48,.12);' : 'background:transparent;color:#7E8DA6;',
+      partners, packages, slots, rewards, txns,
+      partnerName: s.partner.name, partnerArea: s.partner.area, partnerRating: s.partner.rating, partnerDist: s.partner.dist,
+      selPkgName: sel.name, selPkgPrice: sel.price, selPkgEarn: sel.earn, selSlot: slot.label,
+      voucherBalance: 'R100', voucherCount: '1',
+      goHome: () => this.go('home'), goRewards: () => this.go('rewards'), goPartner: () => this.go('partner'),
+      openBooking: () => this.open(this.partners[0]), closeBooking: () => this.close(), confirmBooking: () => this.confirm(),
+      navHome: s.tab === 'home' ? '#2463EB' : '#9AA5B1',
+      navRewards: s.tab === 'rewards' ? '#2463EB' : '#9AA5B1',
+      navPartner: s.tab === 'partner' ? '#2463EB' : '#9AA5B1',
+    };
+  }
+}
+</script>
+</body>
+</html>
