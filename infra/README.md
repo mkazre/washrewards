@@ -15,9 +15,11 @@ explicit go-ahead, run with credentials you control.
 ## What you'll need
 
 An AWS identity with broad permissions for the *one-time* bootstrap +
-initial apply (VPC/EC2 read, ECS, ECR, IAM role/policy create, RDS read,
-ElastiCache, S3, CloudFront, Route 53, ACM, Secrets Manager, WAFv2,
-EventBridge Scheduler, CloudWatch Logs, STS). For a project this size,
+initial apply (VPC/EC2 read **and** write — this creates an Internet
+Gateway, a NAT Gateway, an Elastic IP, and 2 subnets in the existing VPC,
+see below — plus ECS, ECR, IAM role/policy create, RDS read, ElastiCache,
+S3, CloudFront, Route 53, ACM, Secrets Manager, WAFv2, EventBridge
+Scheduler, CloudWatch Logs, STS). For a project this size,
 running the one-time `terraform apply` with your own `AdministratorAccess`
 credentials (never stored — just used from your shell) is the pragmatic
 choice; a tightly-scoped custom policy can replace it later if you want.
@@ -43,24 +45,17 @@ cd infra/environments/production
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-`existing_vpc_id` and `existing_db_instance_identifier` are already filled
-in from the AWS inventory. You still need `public_subnet_ids` and
-`private_subnet_ids` — which of the existing VPC's subnets are public
-(route to an Internet Gateway) vs private (route to a NAT Gateway, or no
-outbound route at all). If you're not sure, run:
-
-```bash
-aws ec2 describe-subnets --filters "Name=vpc-id,Values=vpc-00c4e8dd33a1e4c9c" --region af-south-1 \
-  --query 'Subnets[].{Id:SubnetId,AZ:AvailabilityZone,CIDR:CidrBlock}' --output table
-aws ec2 describe-route-tables --filters "Name=vpc-id,Values=vpc-00c4e8dd33a1e4c9c" --region af-south-1 \
-  --query 'RouteTables[].{Routes:Routes[].{Dest:DestinationCidrBlock,Gw:GatewayId},Assoc:Associations[].SubnetId}'
-```
-
-A subnet whose route table has a route to an `igw-*` is public; one routing
-through a `nat-*` (or with no default route at all) is private. You need at
-least 2 of each, in different Availability Zones.
-
-`domain_name` is already set to `washrewards.online`.
+Every value is already filled in from the AWS inventory (confirmed
+2026-07-21) — `terraform.tfvars.example` should work as-is. One thing worth
+knowing: the existing VPC (`vpc-00c4e8dd33a1e4c9c`, named
+`washrewards_uat_vpc`) had **no Internet Gateway and no NAT Gateway at all**
+— its two subnets were named "public" but had no actual route to the
+internet. `modules/networking` fixes this: it attaches an IGW and routes
+the 2 existing subnets to it (genuinely public now, for the ALB), and
+creates 2 new private subnets (in unused space within the same /24) routed
+through a single NAT Gateway (~$35/month) for ECS tasks. This was a
+deliberate decision, not something to second-guess mid-apply — see the
+project memory / conversation history if you want the full reasoning.
 
 ## 3. Plan and apply
 
@@ -122,6 +117,7 @@ comment at the top of this file.
 
 | Module | What it manages |
 |---|---|
+| `modules/networking` | IGW + NAT Gateway + 2 new private subnets, filling the gap in the existing VPC |
 | `modules/ecr` | Docker image registry, immutable tags |
 | `modules/alb` | Load balancer, target group, WAF (managed rule groups + rate limiting) |
 | `modules/ecs` | Cluster, API/queue/scheduler task defs + services, autoscaling, IAM |
@@ -131,10 +127,10 @@ comment at the top of this file.
 | `modules/dns` | Route 53 zone, ACM cert (DNS-validated), API DNS record |
 | `modules/cicd` | GitHub OIDC provider + narrowly-scoped deploy role |
 
-`environments/production/main.tf` wires these together and adds the two
-things that only make sense at the environment level: the `data` lookups for
-the existing VPC/RDS, and the security group rule granting ECS access into
-the existing RDS security group.
+`environments/production/main.tf` wires these together and adds the things
+that only make sense at the environment level: the `data` lookups for the
+existing VPC/RDS, and the security group rule granting ECS access into the
+existing RDS security group.
 
 ## What's not here yet
 

@@ -6,6 +6,19 @@ data "aws_db_instance" "existing" {
   db_instance_identifier = var.existing_db_instance_identifier
 }
 
+# --- Networking gap-fill -----------------------------------------------
+# The existing VPC has no Internet Gateway or NAT Gateway (confirmed via AWS
+# inventory 2026-07-21) — see modules/networking for what this adds.
+
+module "networking" {
+  source = "../../modules/networking"
+
+  vpc_id                     = data.aws_vpc.existing.id
+  vpc_cidr                   = var.existing_vpc_cidr
+  existing_public_subnet_ids = var.existing_public_subnet_ids
+  existing_public_subnet_azs = var.existing_public_subnet_azs
+}
+
 # Adds a rule to the existing RDS instance's security group so ECS tasks can
 # actually reach it — without taking over management of that whole security
 # group (which may have other rules from however it was originally set up).
@@ -61,7 +74,7 @@ module "ecr" {
 module "alb" {
   source            = "../../modules/alb"
   vpc_id            = data.aws_vpc.existing.id
-  public_subnet_ids = var.public_subnet_ids
+  public_subnet_ids = module.networking.public_subnet_ids
   certificate_arn   = var.domain_name != null ? module.dns[0].certificate_arn : null
 }
 
@@ -81,7 +94,7 @@ module "dns" {
 module "redis" {
   source                    = "../../modules/redis"
   vpc_id                    = data.aws_vpc.existing.id
-  private_subnet_ids        = var.private_subnet_ids
+  private_subnet_ids        = module.networking.private_subnet_ids
   allowed_security_group_id = aws_security_group.ecs_tasks.id
 }
 
@@ -130,7 +143,7 @@ module "ecs" {
   source = "../../modules/ecs"
 
   vpc_id                = data.aws_vpc.existing.id
-  private_subnet_ids    = var.private_subnet_ids
+  private_subnet_ids    = module.networking.private_subnet_ids
   ecs_security_group_id = aws_security_group.ecs_tasks.id
   alb_target_group_arn  = module.alb.target_group_arn
   ecr_repository_url    = module.ecr.repository_url
