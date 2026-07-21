@@ -385,11 +385,13 @@ resource "aws_scheduler_schedule" "laravel_scheduler" {
     role_arn = aws_iam_role.scheduler.arn
 
     ecs_parameters {
-      # The family name (not a revision-pinned ARN) — ECS RunTask resolves
-      # an unqualified family to its latest ACTIVE revision on every
-      # invocation, so a new image pushed by CI takes effect on the very
-      # next minute's run without Terraform having to be involved.
-      task_definition_arn = aws_ecs_task_definition.scheduler.family
+      # An ARN *without* the trailing :revision — EventBridge Scheduler's API
+      # requires something ARN-shaped (a bare family name errors with
+      # "invalid prefix"), but ECS still resolves an ARN with no revision
+      # suffix to the latest ACTIVE revision at invocation time, same as a
+      # bare family name would. So a new image pushed by CI still takes
+      # effect on the very next minute's run without Terraform involvement.
+      task_definition_arn = "arn:aws:ecs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:task-definition/${aws_ecs_task_definition.scheduler.family}"
       launch_type         = "FARGATE"
       task_count          = 1
 
