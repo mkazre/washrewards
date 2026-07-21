@@ -1,6 +1,6 @@
 resource "aws_security_group" "alb" {
   name        = "${var.name_prefix}-alb"
-  description = "WashRewards ALB — public HTTPS/HTTP in, ECS tasks out"
+  description = "WashRewards ALB - public HTTPS/HTTP in, ECS tasks out"
   vpc_id      = var.vpc_id
 
   ingress {

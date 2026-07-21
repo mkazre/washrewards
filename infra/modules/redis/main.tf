@@ -28,7 +28,7 @@ variable "tags" {
 
 resource "aws_security_group" "redis" {
   name        = "${var.name_prefix}-redis"
-  description = "WashRewards Redis — only ECS tasks can connect"
+  description = "WashRewards Redis - only ECS tasks can connect"
   vpc_id      = var.vpc_id
 
   ingress {

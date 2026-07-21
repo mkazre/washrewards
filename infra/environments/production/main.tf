@@ -41,7 +41,7 @@ resource "aws_security_group_rule" "rds_from_ecs" {
 
 resource "aws_security_group" "ecs_tasks" {
   name        = "washrewards-ecs-tasks"
-  description = "WashRewards ECS tasks (API, queue, scheduler) — inbound from ALB only"
+  description = "WashRewards ECS tasks (API, queue, scheduler) - inbound from ALB only"
   vpc_id      = data.aws_vpc.existing.id
 
   ingress {
