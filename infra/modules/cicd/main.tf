@@ -16,6 +16,12 @@ variable "github_repo" {
   default = "washrewards"
 }
 
+variable "github_environment" {
+  description = "The GitHub Environment the deploy job targets. Must match exactly — when a workflow job specifies `environment:`, GitHub's OIDC token subject claim changes from the ref-based format (repo:OWNER/REPO:ref:refs/heads/BRANCH) to repo:OWNER/REPO:environment:NAME, regardless of what triggered the run (push or workflow_dispatch)."
+  type        = string
+  default     = "production"
+}
+
 variable "tags" {
   type    = map(string)
   default = {}
@@ -52,12 +58,15 @@ data "aws_iam_policy_document" "deploy_assume_role" {
       values   = ["sts.amazonaws.com"]
     }
 
-    # Restricts to the main branch of this exact repo — a workflow run from
-    # a fork or another branch cannot assume this role.
+    # Restricts to runs of this exact repo's deploy job targeting the
+    # `production` GitHub Environment — a workflow run from a fork, another
+    # repo, or a job that doesn't declare this environment cannot assume
+    # this role. NOT ref:refs/heads/main — see github_environment above for
+    # why that (more obvious-looking) condition is wrong here.
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_org}/${var.github_repo}:ref:refs/heads/main"]
+      values   = ["repo:${var.github_org}/${var.github_repo}:environment:${var.github_environment}"]
     }
   }
 }
