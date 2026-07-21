@@ -141,6 +141,7 @@ resource "aws_ecs_task_definition" "api" {
         { name = "LOG_CHANNEL", value = "stderr" },
         { name = "DB_CONNECTION", value = "mysql" },
         { name = "AWS_DEFAULT_REGION", value = data.aws_region.current.name },
+        { name = "REDIS_SCHEME", value = "tls" }, # ElastiCache has transit_encryption_enabled — see modules/redis
         { name = "SESSION_DRIVER", value = "redis" },
         { name = "CACHE_STORE", value = "redis" },
         { name = "QUEUE_CONNECTION", value = "redis" },
@@ -235,6 +236,7 @@ resource "aws_ecs_task_definition" "queue" {
         { name = "LOG_CHANNEL", value = "stderr" },
         { name = "DB_CONNECTION", value = "mysql" },
         { name = "AWS_DEFAULT_REGION", value = data.aws_region.current.name },
+        { name = "REDIS_SCHEME", value = "tls" }, # ElastiCache has transit_encryption_enabled — see modules/redis
         { name = "SESSION_DRIVER", value = "redis" },
         { name = "CACHE_STORE", value = "redis" },
         { name = "QUEUE_CONNECTION", value = "redis" },
@@ -324,6 +326,7 @@ resource "aws_ecs_task_definition" "scheduler" {
         { name = "LOG_CHANNEL", value = "stderr" },
         { name = "DB_CONNECTION", value = "mysql" },
         { name = "AWS_DEFAULT_REGION", value = data.aws_region.current.name },
+        { name = "REDIS_SCHEME", value = "tls" }, # ElastiCache has transit_encryption_enabled — see modules/redis
         { name = "CACHE_STORE", value = "redis" },
         { name = "QUEUE_CONNECTION", value = "redis" },
       ]
