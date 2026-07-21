@@ -17,3 +17,7 @@ output "target_group_arn" {
 output "alb_security_group_id" {
   value = aws_security_group.alb.id
 }
+
+output "https_listener_arn" {
+  value = length(aws_lb_listener.https) > 0 ? aws_lb_listener.https[0].arn : null
+}

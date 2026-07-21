@@ -99,7 +99,7 @@ data "aws_iam_policy_document" "deploy_permissions" {
       "ecr:UploadLayerPart",
       "ecr:CompleteLayerUpload",
     ]
-    resources = [var.ecr_repository_arn]
+    resources = compact([var.ecr_repository_arn, var.website_ecr_repository_arn])
   }
 
   statement {
@@ -137,6 +137,11 @@ resource "aws_iam_role_policy" "deploy" {
 
 variable "ecr_repository_arn" {
   type = string
+}
+
+variable "website_ecr_repository_arn" {
+  type    = string
+  default = null
 }
 
 variable "ecs_task_execution_role_arn" {

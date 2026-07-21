@@ -5,13 +5,13 @@
 
 header('Content-Type: application/json');
 
-define('TO_EMAIL',   'info@washrewards.online');
+define('TO_EMAIL',   getenv('SMTP_TO_EMAIL')   ?: 'info@washrewards.online');
 define('TO_NAME',    'WashRewards SA');
-define('SMTP_HOST',  'mail.washrewards.online');
-define('SMTP_PORT',  587);
-define('SMTP_USER',  'info@washrewards.online');
-define('SMTP_PASS',  'Customers@123');
-define('SMTP_FROM',  'info@washrewards.online');
+define('SMTP_HOST',  getenv('SMTP_HOST')       ?: 'mail.washrewards.online');
+define('SMTP_PORT',  (int) (getenv('SMTP_PORT') ?: 587));
+define('SMTP_USER',  getenv('SMTP_USER')       ?: 'info@washrewards.online');
+define('SMTP_PASS',  getenv('SMTP_PASS')       ?: '');
+define('SMTP_FROM',  getenv('SMTP_USER')       ?: 'info@washrewards.online');
 define('SMTP_NAME',  'WashRewards SA');
 
 function sanitize(string $v): string {

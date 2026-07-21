@@ -69,6 +69,11 @@ module "ecr" {
   repository_name = "washrewards-app"
 }
 
+module "ecr_website" {
+  source          = "../../modules/ecr"
+  repository_name = "washrewards-website"
+}
+
 # --- ALB (+ WAF) ---------------------------------------------------------
 
 module "alb" {
@@ -135,6 +140,15 @@ module "secrets" {
     MAIL_PASSWORD     = ""
     MAIL_FROM_ADDRESS = var.mail_from_address
     PAYMENT_GATEWAY   = "sandbox" # flip to a real driver once one is chosen — see backend/config/payments.php
+
+    # website/contact.php's SMTP relay — SMTP_PASS is a placeholder same as
+    # DB_PASSWORD above; set the real value after apply with:
+    #   aws secretsmanager put-secret-value --secret-id washrewards/app-env \
+    #     --secret-string "$(aws secretsmanager get-secret-value --secret-id washrewards/app-env --query SecretString --output text | jq '.SMTP_PASS = "the-real-password"')"
+    SMTP_HOST     = "mail.washrewards.online"
+    SMTP_USER     = "info@washrewards.online"
+    SMTP_PASS     = "REPLACE_ME_MANUALLY"
+    SMTP_TO_EMAIL = "info@washrewards.online"
   }
 }
 
@@ -152,6 +166,26 @@ module "ecs" {
   s3_media_bucket_arn   = module.storage.bucket_arn
 }
 
+# --- Public website (static + PHP contact form, apex/www) ------------------
+# Only created once a domain exists, same as DNS — the ALB listener rule it
+# needs (module.dns[0]) doesn't exist without one.
+
+module "website" {
+  count  = var.domain_name != null ? 1 : 0
+  source = "../../modules/website"
+
+  vpc_id                = data.aws_vpc.existing.id
+  private_subnet_ids    = module.networking.private_subnet_ids
+  ecs_security_group_id = aws_security_group.ecs_tasks.id
+  cluster_arn           = module.ecs.cluster_arn
+  execution_role_arn    = module.ecs.task_execution_role_arn
+  task_role_arn         = module.ecs.task_role_arn
+  https_listener_arn    = module.alb.https_listener_arn
+  domain_name           = var.domain_name
+  ecr_repository_url    = module.ecr_website.repository_url
+  app_secrets_arn       = module.secrets.secret_arn
+}
+
 # --- CI/CD (GitHub Actions OIDC) --------------------------------------------
 
 module "cicd" {
@@ -161,6 +195,7 @@ module "cicd" {
   github_repo = var.github_repo
 
   ecr_repository_arn          = module.ecr.repository_arn
+  website_ecr_repository_arn  = module.ecr_website.repository_arn
   ecs_task_execution_role_arn = module.ecs.task_execution_role_arn
   ecs_task_role_arn           = module.ecs.task_role_arn
 }

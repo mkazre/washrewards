@@ -27,10 +27,14 @@ resource "aws_route53_zone" "this" {
   tags = var.tags
 }
 
-# DNS validation certificate — covers the API subdomain now; add the site's
-# subdomain (www/apex) to subject_alternative_names once that's built.
+# DNS validation certificate — covers the API subdomain plus the apex/www
+# public site.
 resource "aws_acm_certificate" "this" {
-  domain_name       = "${var.api_subdomain}.${var.domain_name}"
+  domain_name = "${var.api_subdomain}.${var.domain_name}"
+  subject_alternative_names = [
+    var.domain_name,
+    "www.${var.domain_name}",
+  ]
   validation_method = "DNS"
 
   lifecycle {
@@ -64,6 +68,33 @@ resource "aws_acm_certificate_validation" "this" {
 resource "aws_route53_record" "api" {
   zone_id = aws_route53_zone.this.zone_id
   name    = "${var.api_subdomain}.${var.domain_name}"
+  type    = "A"
+
+  alias {
+    name                   = var.alb_dns_name
+    zone_id                = var.alb_zone_id
+    evaluate_target_health = true
+  }
+}
+
+# Apex + www — both point at the same ALB; the ALB's host-header listener
+# rule (infra/modules/website) is what actually routes them to the website
+# service instead of the API.
+resource "aws_route53_record" "apex" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = var.alb_dns_name
+    zone_id                = var.alb_zone_id
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "www" {
+  zone_id = aws_route53_zone.this.zone_id
+  name    = "www.${var.domain_name}"
   type    = "A"
 
   alias {
