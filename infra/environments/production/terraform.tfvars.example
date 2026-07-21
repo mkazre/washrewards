@@ -1,0 +1,16 @@
+# Copy to terraform.tfvars (gitignored) and fill in real values.
+# See infra/README.md for where each of these comes from.
+
+aws_region = "af-south-1"
+
+# From the AWS inventory (existing VPC vpc-00c4e8dd33a1e4c9c) — fill in once
+# confirmed which subnets are public vs private.
+existing_vpc_id     = "vpc-00c4e8dd33a1e4c9c"
+public_subnet_ids   = ["subnet-REPLACE_ME", "subnet-REPLACE_ME"]
+private_subnet_ids  = ["subnet-REPLACE_ME", "subnet-REPLACE_ME"]
+
+existing_db_instance_identifier = "database-1"
+
+domain_name = "washrewards.online"
+
+mail_from_address = "hello@washrewards.online"
