@@ -61,8 +61,16 @@ resource "aws_lb_target_group" "api" {
 # HTTPS listener — only created once a certificate exists (i.e. once a
 # domain is set up in Route 53 + ACM). Until then the HTTP listener below
 # forwards directly to the app so there's still something to hit.
+#
+# Gated on enable_https (a plain bool, always known at plan time), NOT on
+# `certificate_arn != null` — certificate_arn is a computed attribute that's
+# genuinely unknown until the cert exists, and Terraform can't save/apply a
+# plan whose resource *count* depends on an unknown value ("Error: Cannot
+# apply incomplete plan"). The ARN itself being unknown at plan time is
+# fine — that's just a normal "(known after apply)" attribute once the
+# resource's existence (count) is already certain.
 resource "aws_lb_listener" "https" {
-  count = var.certificate_arn != null ? 1 : 0
+  count = var.enable_https ? 1 : 0
 
   load_balancer_arn = aws_lb.this.arn
   port              = 443
@@ -82,7 +90,7 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   dynamic "default_action" {
-    for_each = var.certificate_arn != null ? [1] : []
+    for_each = var.enable_https ? [1] : []
     content {
       type = "redirect"
       redirect {
@@ -94,7 +102,7 @@ resource "aws_lb_listener" "http" {
   }
 
   dynamic "default_action" {
-    for_each = var.certificate_arn == null ? [1] : []
+    for_each = var.enable_https ? [] : [1]
     content {
       type             = "forward"
       target_group_arn = aws_lb_target_group.api.arn

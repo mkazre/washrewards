@@ -75,6 +75,7 @@ module "alb" {
   source            = "../../modules/alb"
   vpc_id            = data.aws_vpc.existing.id
   public_subnet_ids = module.networking.public_subnet_ids
+  enable_https      = var.domain_name != null # statically known — var.domain_name is a plain input, not a computed attribute
   certificate_arn   = var.domain_name != null ? module.dns[0].certificate_arn : null
 }
 
