@@ -1,0 +1,657 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Technical specification and AWS hosting requirements for the WashRewards SA car-wash booking and loyalty platform.">
+</head>
+<body><title>WashRewards SA â€” Technical Specification</title>
+<style>
+  :root {
+    --paper: #EEF1F6;
+    --surface: #FFFFFF;
+    --surface-2: #F7F9FC;
+    --ink: #0B1626;
+    --ink-soft: #55637A;
+    --ink-faint: #8592A6;
+    --line: #E1E7EF;
+    --line-soft: #EDF1F6;
+    --navy: #091830;
+    --navy-2: #0E2347;
+    --blue: #2463EB;
+    --blue-ink: #1B4ACb;
+    --amber: #F59E0B;
+    --amber-tint: #FFF7E8;
+    --amber-ink: #B45309;
+    --good: #16A34A;
+    --good-tint: #E7F6EC;
+    --shadow: 0 1px 2px rgba(9,24,48,.04), 0 8px 24px rgba(9,24,48,.06);
+    --shadow-sm: 0 1px 3px rgba(9,24,48,.05);
+    --radius: 16px;
+    --radius-sm: 11px;
+    --measure: 68ch;
+    --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+    --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "SFMono-Regular", "Cascadia Code", "Consolas", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #070B12;
+      --surface: #0F1826;
+      --surface-2: #131F30;
+      --ink: #EAF0F8;
+      --ink-soft: #9CABC4;
+      --ink-faint: #6B7A93;
+      --line: #21304A;
+      --line-soft: #1A2740;
+      --navy: #060E1C;
+      --navy-2: #0C1B34;
+      --blue: #5A8CFF;
+      --blue-ink: #7EA6FF;
+      --amber: #FBBF24;
+      --amber-tint: #241C0C;
+      --amber-ink: #FBBF24;
+      --good: #34D399;
+      --good-tint: #10251B;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="light"] {
+    --paper: #EEF1F6; --surface: #FFFFFF; --surface-2: #F7F9FC;
+    --ink: #0B1626; --ink-soft: #55637A; --ink-faint: #8592A6;
+    --line: #E1E7EF; --line-soft: #EDF1F6;
+    --navy: #091830; --navy-2: #0E2347;
+    --blue: #2463EB; --blue-ink: #1B4ACb; --amber: #F59E0B; --amber-tint: #FFF7E8; --amber-ink: #B45309;
+    --good: #16A34A; --good-tint: #E7F6EC;
+    --shadow: 0 1px 2px rgba(9,24,48,.04), 0 8px 24px rgba(9,24,48,.06);
+    --shadow-sm: 0 1px 3px rgba(9,24,48,.05);
+  }
+  :root[data-theme="dark"] {
+    --paper: #070B12; --surface: #0F1826; --surface-2: #131F30;
+    --ink: #EAF0F8; --ink-soft: #9CABC4; --ink-faint: #6B7A93;
+    --line: #21304A; --line-soft: #1A2740;
+    --navy: #060E1C; --navy-2: #0C1B34;
+    --blue: #5A8CFF; --blue-ink: #7EA6FF; --amber: #FBBF24; --amber-tint: #241C0C; --amber-ink: #FBBF24;
+    --good: #34D399; --good-tint: #10251B;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px rgba(0,0,0,.35);
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .wrap { max-width: 940px; margin: 0 auto; padding: 0 22px 96px; }
+
+  /* ---------- Header band ---------- */
+  .band {
+    background:
+      radial-gradient(120% 140% at 88% -20%, rgba(245,158,11,.22), transparent 55%),
+      linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 60%, #17346a 130%);
+    color: #fff;
+    border-radius: 0 0 26px 26px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .band-inner { max-width: 940px; margin: 0 auto; padding: 30px 22px 34px; }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--amber), #FBBF24);
+    display: grid; place-items: center; color: var(--navy);
+    font-family: var(--display); font-weight: 700; font-size: 17px;
+    flex: none;
+  }
+  .brand-name { font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: .01em; }
+  .eyebrow {
+    margin-top: 26px; font-family: var(--display); font-weight: 600;
+    font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+    color: #9DB0D4;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 700;
+    font-size: clamp(28px, 5.4vw, 43px); line-height: 1.05;
+    margin: 8px 0 0; letter-spacing: -.02em; text-wrap: balance;
+  }
+  .lede { margin: 14px 0 0; max-width: 60ch; color: #C6D2E8; font-size: 16.5px; }
+  .meta {
+    margin-top: 24px; display: flex; flex-wrap: wrap; gap: 10px 26px;
+    padding-top: 20px; border-top: 1px solid rgba(255,255,255,.12);
+  }
+  .meta div { display: flex; flex-direction: column; gap: 2px; }
+  .meta dt { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: #7E8DA6; font-family: var(--display); font-weight: 600; }
+  .meta dd { margin: 0; font-size: 14px; color: #EAF0F8; font-weight: 500; }
+
+  /* ---------- Table of contents ---------- */
+  .toc {
+    margin-top: 26px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm); padding: 18px 20px;
+  }
+  .toc h2 { margin: 0 0 12px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); font-family: var(--display); font-weight: 600; }
+  .toc ol { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 4px 22px; counter-reset: toc; }
+  .toc li { counter-increment: toc; }
+  .toc a {
+    display: flex; gap: 10px; align-items: baseline; text-decoration: none;
+    color: var(--ink-soft); padding: 6px 8px; border-radius: 8px; font-size: 14.5px;
+    transition: background .15s, color .15s;
+  }
+  .toc a::before { content: counter(toc, decimal-leading-zero); font-family: var(--mono); font-size: 12px; color: var(--blue); font-weight: 600; }
+  .toc a:hover { background: var(--surface-2); color: var(--ink); }
+
+  /* ---------- Sections ---------- */
+  section { margin-top: 46px; scroll-margin-top: 20px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 18px; }
+  .sec-num {
+    font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--blue);
+    background: color-mix(in srgb, var(--blue) 12%, transparent);
+    padding: 4px 9px; border-radius: 7px; flex: none; letter-spacing: .02em;
+  }
+  h2.sec-title { font-family: var(--display); font-weight: 650; font-size: clamp(21px, 3vw, 27px); margin: 0; letter-spacing: -.015em; text-wrap: balance; }
+  h3 { font-family: var(--display); font-weight: 600; font-size: 17px; margin: 26px 0 10px; letter-spacing: -.01em; }
+  p { margin: 0 0 14px; max-width: var(--measure); }
+  section > p, section > ul, section > .note { max-width: var(--measure); }
+  a.inline { color: var(--blue-ink); text-decoration: none; border-bottom: 1px solid color-mix(in srgb, var(--blue) 40%, transparent); }
+  strong { font-weight: 650; color: var(--ink); }
+  code {
+    font-family: var(--mono); font-size: .86em;
+    background: var(--surface-2); border: 1px solid var(--line);
+    padding: 1px 6px; border-radius: 6px; color: var(--ink);
+  }
+
+  ul.clean { margin: 0 0 14px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  ul.clean li { position: relative; padding-left: 22px; color: var(--ink-soft); }
+  ul.clean li strong { color: var(--ink); }
+  ul.clean li::before {
+    content: ""; position: absolute; left: 4px; top: 10px;
+    width: 6px; height: 6px; border-radius: 2px; background: var(--amber);
+  }
+
+  /* ---------- Cards & grids ---------- */
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 4px 0 6px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 18px 18px 20px; box-shadow: var(--shadow-sm);
+  }
+  .card h4 { margin: 0 0 4px; font-family: var(--display); font-weight: 600; font-size: 15.5px; display: flex; align-items: center; gap: 8px; }
+  .chip-role { font-size: 10.5px; font-family: var(--display); font-weight: 700; letter-spacing: .07em; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; }
+  .role-consumer { background: color-mix(in srgb, var(--blue) 14%, transparent); color: var(--blue-ink); }
+  .role-partner { background: var(--amber-tint); color: var(--amber-ink); }
+  .role-admin { background: var(--good-tint); color: var(--good); }
+  .card ul { margin: 12px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: 14.5px; display: flex; flex-direction: column; gap: 5px; }
+  .card ul li::marker { color: var(--ink-faint); }
+
+  /* ---------- Tables ---------- */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); background: var(--surface); }
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; min-width: 520px; }
+  thead th {
+    text-align: left; font-family: var(--display); font-weight: 600; font-size: 12px;
+    letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint);
+    padding: 13px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0;
+  }
+  tbody td { padding: 13px 16px; border-bottom: 1px solid var(--line-soft); vertical-align: top; color: var(--ink-soft); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody td:first-child { color: var(--ink); font-weight: 550; }
+  tbody td strong, tbody td b { color: var(--ink); }
+  .num { font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; color: var(--ink); }
+
+  /* ---------- Tenant comparison ---------- */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .tt {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px; box-shadow: var(--shadow-sm); position: relative; overflow: hidden;
+  }
+  .tt::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; }
+  .tt.fixed::before { background: var(--blue); }
+  .tt.mobile::before { background: var(--amber); }
+  .tt h4 { margin: 6px 0 2px; font-family: var(--display); font-weight: 650; font-size: 18px; }
+  .tt .code-note { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+  .tt dl { margin: 16px 0 0; display: flex; flex-direction: column; gap: 12px; }
+  .tt dt { font-family: var(--display); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; }
+  .tt dd { margin: 3px 0 0; font-size: 14px; color: var(--ink-soft); }
+
+  /* ---------- Numbered flow ---------- */
+  .flow { display: flex; flex-direction: column; gap: 12px; counter-reset: flow; margin: 6px 0; }
+  .flow li {
+    list-style: none; position: relative; padding: 16px 18px 16px 58px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm); color: var(--ink-soft); font-size: 15px; max-width: var(--measure);
+  }
+  .flow li strong { color: var(--ink); }
+  .flow li::before {
+    counter-increment: flow; content: counter(flow);
+    position: absolute; left: 16px; top: 15px; width: 28px; height: 28px;
+    background: var(--navy); color: #fff; border-radius: 9px;
+    display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 14px;
+  }
+
+  /* ---------- Callout ---------- */
+  .note {
+    display: flex; gap: 13px; background: var(--amber-tint);
+    border: 1px solid color-mix(in srgb, var(--amber) 32%, transparent);
+    border-radius: var(--radius); padding: 15px 17px; margin: 18px 0; font-size: 14.5px; color: var(--ink);
+  }
+  .note .ico { flex: none; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--amber), #FBBF24); display: grid; place-items: center; color: var(--navy); font-weight: 800; font-family: var(--display); font-size: 13px; }
+  .note.blue { background: color-mix(in srgb, var(--blue) 9%, var(--surface)); border-color: color-mix(in srgb, var(--blue) 30%, transparent); }
+  .note.blue .ico { background: var(--blue); color: #fff; }
+
+  /* ---------- Diagram ---------- */
+  .diagram {
+    overflow-x: auto; background: var(--navy); border-radius: var(--radius);
+    padding: 22px; box-shadow: var(--shadow); border: 1px solid var(--navy-2);
+  }
+  .diagram pre { margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.5; color: #C6D2E8; white-space: pre; }
+  .diagram .hl { color: var(--amber); }
+  .diagram .hlb { color: #7EA6FF; }
+
+  /* ---------- Decisions / phases ---------- */
+  .decisions { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 8px; }
+  .decision {
+    display: flex; gap: 13px; align-items: flex-start; background: var(--good-tint);
+    border: 1px solid color-mix(in srgb, var(--good) 28%, transparent);
+    border-radius: var(--radius-sm); padding: 14px 16px; max-width: var(--measure);
+  }
+  .decision .check { flex: none; width: 22px; height: 22px; border-radius: 50%; background: var(--good); display: grid; place-items: center; margin-top: 1px; }
+  .decision .check svg { display: block; }
+  .decision b { color: var(--ink); }
+  .decision span { color: var(--ink-soft); font-size: 14.5px; }
+
+  ol.questions { margin: 4px 0; padding: 0; list-style: none; counter-reset: q; display: flex; flex-direction: column; gap: 10px; }
+  ol.questions li { counter-increment: q; position: relative; padding-left: 40px; max-width: var(--measure); color: var(--ink-soft); }
+  ol.questions li::before { content: "Q" counter(q); position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--blue); background: color-mix(in srgb, var(--blue) 12%, transparent); padding: 3px 7px; border-radius: 6px; }
+
+  .phase-num { font-variant-numeric: tabular-nums; font-family: var(--display); font-weight: 700; color: var(--blue); }
+
+  footer { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--ink-faint); font-size: 13.5px; max-width: var(--measure); }
+
+  a:focus-visible, .toc a:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 6px; }
+
+  @media (max-width: 640px) {
+    .compare { grid-template-columns: 1fr; }
+    .meta { gap: 12px 20px; }
+    table { min-width: 460px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header class="band">
+  <div class="band-inner">
+    <div class="brand">
+      <span class="brand-mark">W</span>
+      <span class="brand-name">WashRewards&nbsp;SA</span>
+    </div>
+    <p class="eyebrow">Technical Specification &amp; AWS Hosting Requirements</p>
+    <h1>Production build plan for the WashRewards SA platform</h1>
+    <p class="lede">A two-sided car-wash booking &amp; loyalty marketplace for South Africa â€” built on Laravel and React Native, hosted on AWS. This brief defines the stack, the multi-tenant architecture, and the exact cloud resources to provision.</p>
+    <dl class="meta">
+      <div><dt>Version</dt><dd>1.0</dd></div>
+      <div><dt>Date</dt><dd>10 July 2026</dd></div>
+      <div><dt>Prepared for</dt><dd>App Owner &amp; AWS Cloud Engineer</dd></div>
+      <div><dt>Region</dt><dd>af-south-1 Â· Cape Town</dd></div>
+    </dl>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav class="toc" aria-label="Contents">
+    <h2>Contents</h2>
+    <ol>
+      <li><a href="#purpose">Purpose &amp; audience</a></li>
+      <li><a href="#overview">Product &amp; business model</a></li>
+      <li><a href="#tenancy">Multi-tenancy</a></li>
+      <li><a href="#payments">Payments &amp; settlement</a></li>
+      <li><a href="#stack">Technology stack</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#security">Security &amp; compliance</a></li>
+      <li><a href="#aws">AWS resource checklist</a></li>
+      <li><a href="#thirdparty">Third-party services</a></li>
+      <li><a href="#phases">Delivery phases</a></li>
+      <li><a href="#decisions">Decisions &amp; open questions</a></li>
+    </ol>
+  </nav>
+
+  <!-- 1 -->
+  <section id="purpose">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">Purpose &amp; audience</h2></div>
+    <p>This document takes the WashRewards SA prototype to a production-grade mobile application. It is written for two readers:</p>
+    <div class="grid-3">
+      <div class="card">
+        <h4>The app owner</h4>
+        <p style="margin:6px 0 0; color:var(--ink-soft); font-size:14.5px;">To understand what is being built, the technology choices, and the moving parts that make up the product.</p>
+      </div>
+      <div class="card">
+        <h4>The AWS Cloud Engineer</h4>
+        <p style="margin:6px 0 0; color:var(--ink-soft); font-size:14.5px;">To know exactly which AWS resources to provision. <a class="inline" href="#aws">Section&nbsp;08</a> is the actionable checklist.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="overview">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">Product &amp; business model</h2></div>
+    <p>WashRewards SA is a <strong>two-sided marketplace</strong> connecting car owners with car-wash partners, with a built-in loyalty programme. Each car-wash business is a <strong>tenant</strong>; tenants are either <strong>fixed garages</strong> or <strong>mobile car washes</strong>. Payments are collected by the platform and settled to tenants.</p>
+    <div class="grid-3">
+      <div class="card">
+        <h4>Consumer app <span class="chip-role role-consumer">Car owners</span></h4>
+        <ul>
+          <li>Sign-up, profile &amp; vehicle management</li>
+          <li>Discover nearby washes â€” list &amp; map</li>
+          <li>Book a wash: partner â†’ package â†’ slot</li>
+          <li>In-app payment (card &amp; instant EFT)</li>
+          <li>Digital receipts &amp; history</li>
+          <li>Loyalty: R100 voucher every 5 washes</li>
+          <li>Voucher wallet &amp; redemption</li>
+          <li>Rate &amp; review (verified only)</li>
+          <li>Push notifications</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Partner app <span class="chip-role role-partner">Businesses</span></h4>
+        <ul>
+          <li>Dashboard: revenue, bookings, ratings</li>
+          <li>Manage bookings (check-in â†’ done)</li>
+          <li>Manage services &amp; pricing</li>
+          <li>Create promotions</li>
+          <li>QR-code customer sign-ups</li>
+          <li>Reviews &amp; analytics</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4>Admin dashboard <span class="chip-role role-admin">Operator</span></h4>
+        <ul>
+          <li>Manage users, partners, vehicles</li>
+          <li>Tenant onboarding &amp; approval</li>
+          <li>Commission configuration</li>
+          <li>Settlements, payouts &amp; disputes</li>
+          <li>Loyalty &amp; voucher config</li>
+          <li>Moderation &amp; reporting</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="tenancy">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">Multi-tenancy &amp; business models</h2></div>
+    <p>Every car-wash business is a <strong>tenant</strong>. The platform uses <strong>shared-database, row-level multi-tenancy</strong>: a single database where every tenant-owned record carries a <code>tenant_id</code>, automatically scoped by a Laravel <strong>global scope</strong> and a tenant-resolution middleware.</p>
+    <p>This is the right model for a discovery marketplace â€” <strong>consumers query across all tenants</strong> to find nearby washes, while each business sees <strong>only its own</strong> bookings, services, reviews and payouts. Database-per-tenant isolation was considered and rejected as unnecessary overhead.</p>
+    <div class="note blue">
+      <span class="ico">i</span>
+      <div><strong>Access model.</strong> A <code>User</code> can be a consumer and/or belong to a tenant with a partner role (owner / staff), enforced with Laravel Sanctum tokens plus policy/gate authorization. The same person shops <em>and</em> runs their business from one React Native app.</div>
+    </div>
+    <h3>Two tenant types</h3>
+    <p>Distinguished by a <code>type</code> field. Both share core entities (packages, bookings, reviews, promotions, payouts); the type drives the booking UI, pricing, and geolocation logic.</p>
+    <div class="compare">
+      <div class="tt fixed">
+        <span class="code-note">type = fixed_garage</span>
+        <h4>Fixed garage</h4>
+        <dl>
+          <div><dt>Location</dt><dd>Fixed storefront (lat / long)</dd></div>
+          <div><dt>Booking flow</dt><dd>Customer travels to the garage; time-slot at the venue</dd></div>
+          <div><dt>Pricing</dt><dd>Package price</dd></div>
+          <div><dt>Map discovery</dt><dd>Pinned at the storefront</dd></div>
+          <div><dt>Extra data</dt><dd><span class="tag">address</span> <span class="tag">geo_point</span></dd></div>
+        </dl>
+      </div>
+      <div class="tt mobile">
+        <span class="code-note">type = mobile_wash</span>
+        <h4>Mobile car wash</h4>
+        <dl>
+          <div><dt>Location</dt><dd>Service area + travel radius, no fixed address</dd></div>
+          <div><dt>Booking flow</dt><dd>Washer travels to the customer-supplied address; slot + travel window</dd></div>
+          <div><dt>Pricing</dt><dd>Package price + optional travel / call-out fee</dd></div>
+          <div><dt>Map discovery</dt><dd>Shown only when the customer is within the service radius</dd></div>
+          <div><dt>Extra data</dt><dd><span class="tag">service_areas</span> <span class="tag">travel_radius_km</span> <span class="tag">travel_fee</span> <span class="tag">service_address</span></dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="payments">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">Payments &amp; marketplace settlement</h2></div>
+    <p>The platform operates a <strong>collect-and-settle</strong> model â€” funds flow through the platform so it can retain commission and fund loyalty vouchers.</p>
+    <ol class="flow">
+      <li>The customer pays in-app through a <strong>South African payment gateway</strong> (PayFast Â· Peach Â· Paystack Â· Yoco Â· Ozow instant-EFT). Funds are collected into the <strong>platform</strong> merchant account.</li>
+      <li>Each successful booking is recorded in a <strong>ledger</strong> and split into <strong>partner earnings</strong>, <strong>platform commission</strong>, and a <strong>voucher contribution</strong>. New tables: <code>transactions</code>, <code>settlements</code> / <code>payouts</code>.</li>
+      <li><strong>Laravel queue jobs + scheduler</strong> compute settlements and trigger <strong>scheduled per-tenant payouts</strong> to each garage / mobile washer. Mobile payouts include any travel fee collected.</li>
+      <li><strong>PCI-DSS</strong> stays entirely with the gateway (SAQ-A scope). The app and AWS store only transaction <strong>references</strong> and metadata â€” never raw card data.</li>
+    </ol>
+  </section>
+
+  <!-- 5 -->
+  <section id="stack">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">Technology stack</h2></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Layer</th><th>Technology</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Mobile app</td><td><strong>React Native</strong> (Expo + EAS)</td><td>Single codebase for iOS &amp; Android</td></tr>
+          <tr><td>Backend API</td><td><strong>Laravel</strong> (PHP 8.3+)</td><td>RESTful JSON API for the mobile apps</td></tr>
+          <tr><td>Admin dashboard</td><td><strong>Laravel</strong> (Livewire / Filament)</td><td>Server-rendered web admin, same codebase &amp; DB</td></tr>
+          <tr><td>API auth</td><td><strong>Laravel Sanctum</strong> (tokens)</td><td>Alt: Amazon Cognito if federated identity needed</td></tr>
+          <tr><td>Multi-tenancy</td><td><strong>Shared-DB, row-level</strong></td><td><code>tenant_id</code> scoping via global scopes; DB-per-tenant rejected as overkill</td></tr>
+          <tr><td>Database</td><td><strong>MySQL 8</strong> (Amazon RDS)</td><td>PostgreSQL acceptable alternative</td></tr>
+          <tr><td>Cache / sessions / queues</td><td><strong>Redis</strong> (ElastiCache)</td><td>Laravel cache, session &amp; queue backend</td></tr>
+          <tr><td>Background jobs</td><td><strong>Laravel Queues</strong></td><td>Notifications, settlements, emails</td></tr>
+          <tr><td>File / media storage</td><td><strong>Amazon S3</strong></td><td>Photos, storefront images, receipts, avatars</td></tr>
+          <tr><td>CDN</td><td><strong>Amazon CloudFront</strong></td><td>Serve S3 media &amp; static assets</td></tr>
+          <tr><td>Push notifications</td><td><strong>FCM + APNs</strong> / Expo Push</td><td>Optionally fronted by Amazon SNS</td></tr>
+          <tr><td>Maps &amp; geolocation</td><td><strong>Google Maps Platform</strong></td><td>Maps, Places, Geocoding. Alt: Amazon Location Service</td></tr>
+          <tr><td>Payments</td><td><strong>SA gateway</strong></td><td>PayFast / Peach / Paystack / Yoco / Ozow â€” PCI-DSS handled by gateway</td></tr>
+          <tr><td>Transactional email</td><td><strong>Amazon SES</strong></td><td>Receipts, resets, partner onboarding</td></tr>
+          <tr><td>Monitoring / logs</td><td><strong>CloudWatch</strong> (+ Sentry)</td><td>App, infra &amp; error monitoring</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <span class="ico">R</span>
+      <div><strong>Payments are not on AWS.</strong> Card processing is delegated to a PCI-DSS compliant SA gateway, keeping the platform out of PCI scope for card data. AWS only stores payment <em>references</em> and transaction metadata.</div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="architecture">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">High-level architecture</h2></div>
+    <p>Recommended compute: run the Laravel API and admin on <strong>Amazon ECS Fargate</strong> (containers, auto-scaling, no servers to patch). Acceptable alternatives: Elastic Beanstalk (easiest) or EC2 Auto Scaling Group (most control).</p>
+    <div class="diagram" aria-label="Architecture diagram">
+<pre>  iOS / Android  â”€â”€HTTPSâ”€â”€â–¶  Route 53 (DNS)
+  React Native app             â”‚
+  (consumer &amp; partner)         â–¼
+                        <span class="hl">AWS WAF</span> â–¶ Application Load Balancer (HTTPS)
+                                     â”‚
+  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ VPC Â· private subnets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+  â”‚                                                                       â”‚
+  â”‚   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”          â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”                        â”‚
+  â”‚   â”‚ Laravel API   â”‚          â”‚ Laravel Queue â”‚                        â”‚
+  â”‚   â”‚ (ECS Fargate) â”‚          â”‚ Workers (ECS) â”‚                        â”‚
+  â”‚   â”‚ + Admin UI    â”‚          â”‚ + Scheduler   â”‚                        â”‚
+  â”‚   â”‚ <span class="hlb">tenant-scoped</span> â”‚          â”‚ <span class="hl">settlement /</span>  â”‚                        â”‚
+  â”‚   â”‚ <span class="hlb">(tenant_id)</span>   â”‚          â”‚ <span class="hl">payout jobs</span>   â”‚                        â”‚
+  â”‚   â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜          â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜                        â”‚
+  â”‚          â”‚                          â”‚                                 â”‚
+  â”‚    â”Œâ”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”            â”Œâ”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”                          â”‚
+  â”‚    â”‚ Amazon RDS â”‚            â”‚ ElastiCache  â”‚                          â”‚
+  â”‚    â”‚ MySQLÂ·MAZ  â”‚            â”‚ (Redis)      â”‚                          â”‚
+  â”‚    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜                          â”‚
+  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+           â”‚            â”‚             â”‚             â”‚
+           â–¼            â–¼             â–¼             â–¼
+       Amazon S3   CloudFront    Amazon SES     SNS / FCM
+      (media)       (CDN)        (email)        (push)
+
+  External (non-AWS):  Payment Gateway  Â·  Google Maps API</pre>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="security">
+    <div class="sec-head"><span class="sec-num">07</span><h2 class="sec-title">Security &amp; compliance</h2></div>
+    <ul class="clean">
+      <li><strong>HTTPS/TLS everywhere</strong> â€” ACM certificates on ALB &amp; CloudFront.</li>
+      <li><strong>Secrets in AWS Secrets Manager</strong> â€” DB, gateway &amp; API keys; never in code.</li>
+      <li><strong>AWS WAF</strong> in front of ALB and CloudFront (OWASP rules, rate limiting).</li>
+      <li><strong>Encryption at rest</strong> â€” RDS, S3 &amp; ElastiCache encrypted via KMS.</li>
+      <li><strong>Private subnets</strong> for compute and data; only the ALB is public.</li>
+      <li><strong>POPIA compliance</strong> â€” data hosted in <code>af-south-1</code> (Cape Town) for residency &amp; low latency. Fall back to <code>eu-west-1</code> for any service unavailable there.</li>
+      <li><strong>PCI-DSS</strong> â€” card data handled entirely by the gateway (SAQ-A scope).</li>
+      <li><strong>Backups</strong> â€” automated RDS snapshots (â‰¥7 days), S3 versioning.</li>
+      <li><strong>GuardDuty + CloudTrail</strong> â€” threat detection and audit logging.</li>
+    </ul>
+  </section>
+
+  <!-- 8 -->
+  <section id="aws">
+    <div class="sec-head"><span class="sec-num">08</span><h2 class="sec-title">AWS resource checklist</h2></div>
+    <p>The actionable list for the Cloud Engineer. Sizing is a starting recommendation for production launch and can be tuned after load testing. Region: <strong>af-south-1 (Cape Town)</strong> preferred.</p>
+
+    <h3>Networking</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Resource</th><th>Specification / purpose</th></tr></thead>
+        <tbody>
+          <tr><td>VPC</td><td>1 per environment, public + private subnets across <strong>2 Availability Zones</strong></td></tr>
+          <tr><td>Subnets</td><td>2 public (ALB, NAT), 2 private-app (ECS), 2 private-data (RDS, Redis)</td></tr>
+          <tr><td>Internet Gateway</td><td>1 per VPC</td></tr>
+          <tr><td>NAT Gateway</td><td>1â€“2 for outbound from private subnets</td></tr>
+          <tr><td>Route 53</td><td>Hosted zone + DNS records</td></tr>
+          <tr><td>ACM</td><td>TLS certificates for API domain &amp; CDN</td></tr>
+          <tr><td>Security Groups</td><td>Per-tier (ALB / app / data), least-privilege</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Compute</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Resource</th><th>Specification / purpose</th></tr></thead>
+        <tbody>
+          <tr><td>Application Load Balancer</td><td>1, HTTPS listener â†’ ECS API service</td></tr>
+          <tr><td>ECS Cluster (Fargate)</td><td>1 per environment</td></tr>
+          <tr><td>ECS Service â€” API + Admin</td><td class="num">2+ tasks, ~1 vCPU / 2 GB each, auto-scale 2â†’6</td></tr>
+          <tr><td>ECS Service â€” Queue Workers</td><td class="num">1â€“2 tasks, 0.5 vCPU / 1 GB; queues + scheduler</td></tr>
+          <tr><td>Amazon ECR</td><td>Docker image registry for the Laravel image</td></tr>
+          <tr><td>Alternative</td><td>Elastic Beanstalk (PHP) <em>or</em> EC2 ASG (2Ã— t3.medium)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Data</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Resource</th><th>Specification / purpose</th></tr></thead>
+        <tbody>
+          <tr><td>Amazon RDS (MySQL 8)</td><td class="num"><strong>Multi-AZ</strong>, start db.t3.medium (2 vCPU / 4 GB), 50â€“100 GB gp3, automated backups. Scale to db.m6g as usage grows</td></tr>
+          <tr><td>Amazon ElastiCache (Redis)</td><td class="num">cache.t3.small, 1 primary + 1 replica â€” cache / sessions / queues</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Storage, delivery &amp; messaging</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Resource</th><th>Specification / purpose</th></tr></thead>
+        <tbody>
+          <tr><td>Amazon S3</td><td>Buckets for media, receipts, private docs â€” versioning + encryption on</td></tr>
+          <tr><td>Amazon CloudFront</td><td>CDN in front of S3 (and optionally the API)</td></tr>
+          <tr><td>Amazon SES</td><td>Transactional email â€” request production access (out of sandbox)</td></tr>
+          <tr><td>Amazon SNS <em>(optional)</em></td><td>Fan-out to FCM/APNs for push, or SMS OTP</td></tr>
+          <tr><td>Amazon SQS <em>(optional)</em></td><td>Managed queue backend if not using Redis</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Security &amp; operations</h3>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Resource</th><th>Specification / purpose</th></tr></thead>
+        <tbody>
+          <tr><td>AWS Secrets Manager</td><td>DB, gateway &amp; third-party credentials</td></tr>
+          <tr><td>AWS WAF</td><td>Attached to ALB + CloudFront</td></tr>
+          <tr><td>AWS KMS</td><td>Encryption keys for RDS / S3 / Secrets</td></tr>
+          <tr><td>IAM</td><td>Roles / policies per service, least privilege</td></tr>
+          <tr><td>CloudWatch</td><td>Logs, metrics, alarms, dashboards</td></tr>
+          <tr><td>CloudTrail</td><td>API audit logging</td></tr>
+          <tr><td>GuardDuty</td><td>Threat detection</td></tr>
+          <tr><td>CodePipeline + CodeBuild</td><td>Build image â†’ push to ECR â†’ deploy to ECS (or GitHub Actions)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note blue">
+      <span class="ico">i</span>
+      <div>Three isolated environments recommended â€” <strong>Development</strong> (minimal, single-AZ), <strong>Staging</strong> (production mirror at reduced scale), <strong>Production</strong> (Multi-AZ, auto-scaling, full monitoring) â€” ideally separate AWS accounts under AWS Organizations.</div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section id="thirdparty">
+    <div class="sec-head"><span class="sec-num">09</span><h2 class="sec-title">Third-party (non-AWS) services</h2></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Service</th><th>Purpose</th><th>Owner action</th></tr></thead>
+        <tbody>
+          <tr><td>Payment gateway</td><td>Card &amp; EFT processing, PCI-DSS, <strong>marketplace split payouts</strong></td><td>Merchant account + keys; confirm split-payout support</td></tr>
+          <tr><td>Google Maps Platform</td><td>Maps, places, geocoding</td><td>Billing account + API key</td></tr>
+          <tr><td>Apple Developer Program</td><td>iOS App Store distribution</td><td>$99/yr account</td></tr>
+          <tr><td>Google Play Console</td><td>Android distribution</td><td>One-time $25 account</td></tr>
+          <tr><td>Firebase (FCM)</td><td>Push notification delivery</td><td>Free project</td></tr>
+          <tr><td>Expo EAS <em>(optional)</em></td><td>Managed React Native builds</td><td>Subscription</td></tr>
+          <tr><td>Domain name</td><td>App / API / admin domain</td><td>Register or transfer to Route 53</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="phases">
+    <div class="sec-head"><span class="sec-num">10</span><h2 class="sec-title">Indicative delivery phases</h2></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Phase</th><th>Scope</th></tr></thead>
+        <tbody>
+          <tr><td><span class="phase-num">1</span> Â· Foundation</td><td>AWS setup, VPC, CI/CD, Laravel API skeleton, auth, <strong>multi-tenancy foundation</strong>, DB schema</td></tr>
+          <tr><td><span class="phase-num">2</span> Â· Consumer core</td><td>Onboarding, vehicles, discovery (fixed &amp; mobile), booking (venue slot + at-address flow), receipts</td></tr>
+          <tr><td><span class="phase-num">3</span> Â· Payments &amp; settlement</td><td>Gateway integration, ledger, commission split, <strong>per-tenant payouts</strong>, travel-fee handling</td></tr>
+          <tr><td><span class="phase-num">4</span> Â· Loyalty &amp; reviews</td><td>Voucher engine, wallet / redemption, ratings &amp; verified reviews, notifications</td></tr>
+          <tr><td><span class="phase-num">5</span> Â· Partner experience</td><td>In-app partner role: dashboard, bookings, services, promotions, QR sign-ups</td></tr>
+          <tr><td><span class="phase-num">6</span> Â· Admin dashboard</td><td>Tenant onboarding, commission config, settlement oversight, disputes, reporting</td></tr>
+          <tr><td><span class="phase-num">7</span> Â· Hardening &amp; launch</td><td>Load testing, security review, POPIA review, store submission</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section id="decisions">
+    <div class="sec-head"><span class="sec-num">11</span><h2 class="sec-title">Decisions &amp; open questions</h2></div>
+    <h3>Confirmed with the owner</h3>
+    <div class="decisions">
+      <div class="decision"><span class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span><b>Multi-tenancy</b> â€” shared database, row-level (<code>tenant_id</code>) scoping.</span></div>
+      <div class="decision"><span class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span><b>Payments</b> â€” platform collects and settles; commission retained; scheduled per-tenant payouts fund the loyalty vouchers.</span></div>
+      <div class="decision"><span class="check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span><span><b>Partner surface</b> â€” delivered inside the same React Native app, role-based.</span></div>
+    </div>
+    <h3>Open â€” needed to finalise the AWS footprint</h3>
+    <ol class="questions">
+      <li><strong>Expected launch scale</strong> â€” number of tenants (garages + mobile washers), cities, and monthly bookings at launch. Drives instance sizing and cost.</li>
+      <li><strong>Preferred payment gateway</strong> â€” confirm it supports marketplace split payouts to sub-accounts.</li>
+      <li><strong>Data residency</strong> â€” confirm <code>af-south-1</code> (Cape Town) as the hosting region.</li>
+      <li><strong>Budget guidance</strong> for AWS monthly spend, to right-size dev / staging.</li>
+    </ol>
+  </section>
+
+  <footer>
+    Prepared as a shareable technical brief. Once the open questions are confirmed, this can be extended with a detailed cost estimate and a formal AWS Well-Architected review.
+  </footer>
+
+</div>
+
+</body>
+</html>
+
