@@ -1,0 +1,125 @@
+name: Deploy backend
+
+# Builds the Laravel Docker image, pushes it to ECR (tagged by commit SHA —
+# the repo is IMMUTABLE, so no floating "latest"/"main" tag), registers a new
+# ECS task definition revision pointing at it, runs migrations once against
+# that revision, then rolls both the API and queue-worker services onto it.
+# Authenticates via GitHub OIDC — no stored AWS access keys (see
+# infra/README.md). Requires the AWS_DEPLOY_ROLE_ARN, AWS_REGION,
+# ECR_REPOSITORY and ECS_CLUSTER repo variables, set once the infra has been
+# applied (Terraform outputs — none of them are secrets).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write # required for OIDC
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        working-directory: backend
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Register new task definitions
+        id: register
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+        run: |
+          for family in washrewards-api washrewards-queue washrewards-scheduler; do
+            aws ecs describe-task-definition --task-definition "$family" --query taskDefinition \
+              | jq --arg IMAGE "$IMAGE" \
+                'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+                 | .containerDefinitions[0].image = $IMAGE' \
+              > "/tmp/$family.json"
+
+            NEW_ARN=$(aws ecs register-task-definition --cli-input-json "file:///tmp/$family.json" \
+              --query 'taskDefinition.taskDefinitionArn' --output text)
+
+            echo "${family}_arn=$NEW_ARN" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: Run database migrations
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          TASK_DEF: ${{ steps.register.outputs.washrewards-api_arn }}
+        run: |
+          NET_CONFIG=$(aws ecs describe-services --cluster "$CLUSTER" --services washrewards-api \
+            --query 'services[0].networkConfiguration' --output json)
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --task-definition "$TASK_DEF" \
+            --launch-type FARGATE \
+            --network-configuration "$NET_CONFIG" \
+            --overrides '{"containerOverrides":[{"name":"api","command":["php","artisan","migrate","--force"]}]}' \
+            --query 'tasks[0].taskArn' --output text)
+
+          aws ecs wait tasks-stopped --cluster "$CLUSTER" --tasks "$TASK_ARN"
+
+          EXIT_CODE=$(aws ecs describe-tasks --cluster "$CLUSTER" --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration task failed with exit code $EXIT_CODE — aborting before rolling the services."
+            exit 1
+          fi
+
+      - name: Deploy API + admin service
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          TASK_DEF: ${{ steps.register.outputs.washrewards-api_arn }}
+        run: |
+          aws ecs update-service --cluster "$CLUSTER" --service washrewards-api --task-definition "$TASK_DEF"
+          aws ecs wait services-stable --cluster "$CLUSTER" --services washrewards-api
+
+      - name: Deploy queue worker service
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          TASK_DEF: ${{ steps.register.outputs.washrewards-queue_arn }}
+        run: |
+          aws ecs update-service --cluster "$CLUSTER" --service washrewards-queue --task-definition "$TASK_DEF"
+          aws ecs wait services-stable --cluster "$CLUSTER" --services washrewards-queue
+
+      - name: Update scheduled task definition
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+        run: |
+          # The scheduler has no long-running service to roll — EventBridge
+          # Scheduler always launches from the task family's latest ACTIVE
+          # revision, which register-task-definition above already became.
+          echo "Scheduler will pick up ${{ steps.register.outputs.washrewards-scheduler_arn }} on its next run."

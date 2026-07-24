@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap');
+
+/* WashRewards SA admin theme — navy #091830 / amber #F59E0B, Space Grotesk headings */
+
+.fi-logo,
+.fi-header-heading,
+.fi-modal-heading,
+.fi-section-header-heading,
+.fi-ta-header-cell-label,
+.fi-wi-stats-overview-stat-value,
+.fi-sidebar-group-label,
+h1,
+h2,
+h3 {
+    font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.fi-logo {
+    font-weight: 700;
+}

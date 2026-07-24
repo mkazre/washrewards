@@ -1,0 +1,25 @@
+# Copy to terraform.tfvars (gitignored) and fill in real values.
+# See infra/README.md for where each of these comes from.
+#
+# All defaults below already match the AWS inventory confirmed 2026-07-21 —
+# this file exists mainly so you have an explicit terraform.tfvars rather
+# than relying on variables.tf defaults, in case any of these change later
+# (e.g. a second AZ's subnets, a different RDS instance for a future
+# environment).
+
+aws_region = "af-south-1"
+
+existing_vpc_id   = "vpc-00c4e8dd33a1e4c9c"
+existing_vpc_cidr = "10.0.30.0/24"
+
+# uat_public_subnet_1 (af-south-1b) and uat_public_subnet_2 (af-south-1a) —
+# named "public" already but had no Internet Gateway attached; modules/networking
+# fixes that. Order must match between the two lists.
+existing_public_subnet_ids = ["subnet-08c880154929ca146", "subnet-00cf0af006eb54984"]
+existing_public_subnet_azs = ["af-south-1b", "af-south-1a"]
+
+existing_db_instance_identifier = "database-1"
+
+domain_name = "washrewards.online"
+
+mail_from_address = "hello@washrewards.online"

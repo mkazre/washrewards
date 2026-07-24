@@ -1,0 +1,78 @@
+name: Deploy website
+
+# Builds and deploys the public marketing site (website/) as its own ECS
+# service, independent of the Laravel app — a copy change here never
+# triggers a backend redeploy and vice versa. Same OIDC/no-stored-keys
+# pattern as deploy.yml. Requires the AWS_DEPLOY_ROLE_ARN, AWS_REGION and
+# ECS_CLUSTER repo variables (already set for the backend workflow) plus
+# WEBSITE_ECR_REPOSITORY (Terraform output module.ecr_website.repository_name).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "website/**"
+      - ".github/workflows/deploy-website.yml"
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-website
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Log in to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        id: build
+        working-directory: website
+        env:
+          REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          REPOSITORY: ${{ vars.WEBSITE_ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE="$REGISTRY/$REPOSITORY:$IMAGE_TAG"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Register new task definition
+        id: register
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+        run: |
+          aws ecs describe-task-definition --task-definition washrewards-website --query taskDefinition \
+            | jq --arg IMAGE "$IMAGE" \
+              'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+               | .containerDefinitions[0].image = $IMAGE' \
+            > /tmp/washrewards-website.json
+
+          NEW_ARN=$(aws ecs register-task-definition --cli-input-json file:///tmp/washrewards-website.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+
+          echo "task_def_arn=$NEW_ARN" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy website service
+        env:
+          CLUSTER: ${{ vars.ECS_CLUSTER }}
+          TASK_DEF: ${{ steps.register.outputs.task_def_arn }}
+        run: |
+          aws ecs update-service --cluster "$CLUSTER" --service washrewards-website --task-definition "$TASK_DEF"
+          aws ecs wait services-stable --cluster "$CLUSTER" --services washrewards-website
