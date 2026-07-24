@@ -1,22 +1,27 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "WashRewards",
+    "slug": "washrewards",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "washrewards",
     "userInterfaceStyle": "light",
-    "ios": {
-      "supportsTablet": true
-    },
+    "primaryColor": "#2463EB",
+    "backgroundColor": "#F5F6F8",
     "android": {
+      "package": "za.co.washrewards.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#091830",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "za.co.washrewards.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
