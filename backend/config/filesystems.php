@@ -56,6 +56,12 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            // The media bucket has S3 Block Public Access fully enabled and is
+            // served through CloudFront (Origin Access Control) instead — any
+            // write that asks S3 for a public-read ACL is rejected outright.
+            // 'private' here is a safety net; every FileUpload field should
+            // also set ->visibility('private') explicitly.
+            'visibility' => 'private',
             'throw' => false,
             'report' => false,
         ],

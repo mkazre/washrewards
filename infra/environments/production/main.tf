@@ -164,6 +164,8 @@ module "ecs" {
   ecr_repository_url    = module.ecr.repository_url
   app_secrets_arn       = module.secrets.secret_arn
   s3_media_bucket_arn   = module.storage.bucket_arn
+
+  media_cloudfront_domain_name = module.storage.cloudfront_domain_name
 }
 
 # --- Public website (static + PHP contact form, apex/www) ------------------

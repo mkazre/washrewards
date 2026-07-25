@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PlatformSettings\Schemas;
 
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -56,14 +57,19 @@ class PlatformSettingForm
                             ->image()
                             ->imageEditor()
                             ->directory('platform/branding')
-                            ->visibility('public')
+                            // The media bucket blocks public ACLs (S3 Block Public
+                            // Access) and is served through CloudFront's Origin
+                            // Access Control instead — the default 'public'
+                            // visibility asks S3 for a public-read ACL, which the
+                            // bucket rejects outright and throws on save.
+                            ->visibility('private')
                             ->maxSize(2048)
-                            ->helperText('Shown in the sidebar/top bar. PNG or SVG on a transparent background works best.'),
+                            ->helperText('Shown in the sidebar and on the login page. PNG or SVG on a transparent background works best.'),
                         FileUpload::make('favicon_path')
                             ->label('Favicon')
                             ->acceptedFileTypes(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/svg+xml'])
                             ->directory('platform/branding')
-                            ->visibility('public')
+                            ->visibility('private')
                             ->maxSize(512)
                             ->helperText('The little icon in the browser tab. A square PNG (32×32 or 64×64) or .ico.'),
                     ]),
@@ -77,7 +83,7 @@ class PlatformSettingForm
                             ->image()
                             ->imageEditor()
                             ->directory('platform/branding')
-                            ->visibility('public')
+                            ->visibility('private')
                             ->maxSize(6144)
                             ->columnSpanFull()
                             ->helperText('A wide, high-resolution image looks best (e.g. 1920×1080).'),
@@ -90,13 +96,14 @@ class PlatformSettingForm
                             ->label('Overlay colour')
                             ->default('#091830')
                             ->visible(fn (callable $get) => (bool) $get('login_overlay_enabled')),
-                        TextInput::make('login_overlay_opacity')
+                        Slider::make('login_overlay_opacity')
                             ->label('Overlay opacity')
-                            ->numeric()
-                            ->minValue(0)
-                            ->maxValue(100)
-                            ->suffix('%')
+                            ->range(minValue: 0, maxValue: 100)
+                            ->step(5)
                             ->default(40)
+                            ->fillTrack()
+                            ->tooltips()
+                            ->helperText('How strong the colour overlay is, from transparent to fully opaque.')
                             ->visible(fn (callable $get) => (bool) $get('login_overlay_enabled')),
                     ]),
             ]);

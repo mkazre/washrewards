@@ -105,6 +105,13 @@ resource "aws_iam_role_policy" "task_permissions" {
 locals {
   image = "${var.ecr_repository_url}:${var.image_tag}"
 
+  # The media bucket blocks all public access (Block Public Access + no public
+  # bucket policy) and is only reachable through CloudFront's Origin Access
+  # Control. Laravel's S3 disk builds public URLs from `AWS_URL` when set
+  # (see config/filesystems.php) — without it, Storage::url() falls back to
+  # the raw S3 host, which 403s for anyone but CloudFront itself.
+  aws_url_env = { name = "AWS_URL", value = "https://${var.media_cloudfront_domain_name}" }
+
   # Every container needs the same Laravel env — pulled from one Secrets
   # Manager JSON secret rather than one entry per key, to keep the task
   # definition (and this module) from having to know every env var name.
@@ -146,6 +153,7 @@ resource "aws_ecs_task_definition" "api" {
         { name = "CACHE_STORE", value = "redis" },
         { name = "QUEUE_CONNECTION", value = "redis" },
         { name = "FILESYSTEM_DISK", value = "s3" },
+        local.aws_url_env,
       ]
       secrets = local.app_secrets_env
       logConfiguration = {
@@ -241,6 +249,7 @@ resource "aws_ecs_task_definition" "queue" {
         { name = "CACHE_STORE", value = "redis" },
         { name = "QUEUE_CONNECTION", value = "redis" },
         { name = "FILESYSTEM_DISK", value = "s3" },
+        local.aws_url_env,
       ]
       secrets = local.app_secrets_env
       logConfiguration = {

@@ -38,6 +38,11 @@ variable "s3_media_bucket_arn" {
   type = string
 }
 
+variable "media_cloudfront_domain_name" {
+  description = "CloudFront domain fronting the private media bucket — becomes AWS_URL so Storage::url() returns reachable (CDN) URLs instead of the blocked raw S3 host"
+  type        = string
+}
+
 variable "log_retention_days" {
   type    = number
   default = 30
