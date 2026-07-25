@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -7,17 +7,48 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, font, radius, shadow } from '../theme';
-import { Card, Stars } from '../components/ui';
-import { partners, user, vehicle, voucher, lastWash } from '../data/mock';
+import { Card, Stars, Loading, ErrorState } from '../components/ui';
 import { RootStackParamList } from '../navigation/types';
+import { useAuth } from '../auth/AuthContext';
+import { useAsync } from '../hooks/useAsync';
+import * as api from '../api/endpoints';
+import { TenantSummary, Vehicle, VouchersResponse } from '../api/types';
+import { money, num, initials } from '../utils/format';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+const PIN_POS = [
+  { top: '26%', left: '40%' }, { top: '50%', left: '21%' },
+  { top: '38%', left: '70%' }, { top: '68%', left: '55%' },
+  { top: '30%', left: '58%' },
+];
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
-  const [mapView, setMapView] = useState(false);
-  const washRemaining = 5 - voucher.washCount;
+  const { user, token, signOut } = useAuth();
+  const [mapView, setMapView] = React.useState(false);
+
+  const { data, loading, error, reload } = useAsync(async () => {
+    const [vehicles, vouchers, tenants] = await Promise.all([
+      api.getVehicles(token!),
+      api.getVouchers(token!),
+      api.getTenants(),
+    ]);
+    return { vehicles, vouchers, tenants: tenants.data };
+  }, [token]);
+
+  const vehicle: Vehicle | undefined = data?.vehicles.find((v) => v.is_default) ?? data?.vehicles[0];
+  const vouchers: VouchersResponse | undefined = data?.vouchers;
+  const active = vouchers?.data.filter((v) => v.status === 'active') ?? [];
+  const balance = active.reduce((s, v) => s + num(v.amount), 0);
+  const progress = vouchers?.progress;
+  const tenants: TenantSummary[] = data?.tenants ?? [];
+
+  const confirmSignOut = () =>
+    Alert.alert('Sign out', 'Sign out of WashRewards?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign out', style: 'destructive', onPress: () => signOut() },
+    ]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
@@ -26,12 +57,12 @@ export default function HomeScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
           <View style={styles.rowBetween}>
             <View style={styles.row}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{user.initials}</Text>
-              </View>
+              <Pressable onLongPress={confirmSignOut} delayLongPress={500} style={styles.avatar}>
+                <Text style={styles.avatarText}>{initials(user?.name)}</Text>
+              </Pressable>
               <View>
                 <Text style={styles.welcome}>Welcome back</Text>
-                <Text style={styles.userName}>{user.name}</Text>
+                <Text style={styles.userName}>{user?.name ?? 'Guest'}</Text>
               </View>
             </View>
             <Pressable style={styles.bell} onPress={() => nav.navigate('Notifications')}>
@@ -40,24 +71,27 @@ export default function HomeScreen() {
             </Pressable>
           </View>
 
-          <View style={styles.vehicleChip}>
+          <Pressable
+            style={styles.vehicleChip}
+            onPress={() => nav.navigate('AddVehicle')}
+          >
             <Feather name="truck" size={15} color={colors.onNavyMute} />
-            <Text style={styles.vehicleName}>{vehicle.name}</Text>
-            <View style={styles.dotSep} />
-            <Text style={styles.vehiclePlate}>{vehicle.plate}</Text>
-          </View>
+            {vehicle ? (
+              <>
+                <Text style={styles.vehicleName}>{vehicle.name}</Text>
+                <View style={styles.dotSep} />
+                <Text style={styles.vehiclePlate}>{vehicle.plate}</Text>
+              </>
+            ) : (
+              <Text style={styles.vehicleName}>Add your vehicle</Text>
+            )}
+          </Pressable>
           <View style={{ height: 80 }} />
         </View>
 
-        {/* Content pulled up over the header */}
         <View style={{ paddingHorizontal: 22, marginTop: -80 }}>
           {/* Voucher balance card */}
-          <LinearGradient
-            colors={[colors.navy2, colors.navy3, colors.navy4]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.voucherCard}
-          >
+          <LinearGradient colors={[colors.navy2, colors.navy3, colors.navy4]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.voucherCard}>
             <View style={styles.glow} />
             <View style={styles.rowBetween}>
               <View style={styles.row}>
@@ -65,60 +99,59 @@ export default function HomeScreen() {
                 <Text style={styles.brandText}>WashRewards</Text>
               </View>
               <LinearGradient colors={[colors.amber, colors.amber2]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.voucherBadge}>
-                <Text style={styles.voucherBadgeText}>{voucher.count} VOUCHER</Text>
+                <Text style={styles.voucherBadgeText}>{active.length} VOUCHER{active.length === 1 ? '' : 'S'}</Text>
               </LinearGradient>
             </View>
             <Text style={styles.voucherLabel}>VOUCHER BALANCE</Text>
             <View style={styles.balanceRow}>
-              <Text style={styles.balanceValue}>{voucher.balance}</Text>
-              <Text style={styles.balanceReady}>ready</Text>
+              <Text style={styles.balanceValue}>{money(balance)}</Text>
+              <Text style={styles.balanceReady}>{active.length ? 'ready' : ''}</Text>
             </View>
             <View style={styles.rowBetween}>
-              <Text style={styles.cardNumber}>•••• 4827</Text>
+              <Text style={styles.cardNumber}>{user?.name?.toUpperCase() ?? ''}</Text>
               <Feather name="wifi" size={20} color={colors.amber} style={{ opacity: 0.85 }} />
             </View>
           </LinearGradient>
 
-          {/* Book a wash */}
           <Pressable
-            style={({ pressed }) => [styles.bookBtn, pressed && { backgroundColor: colors.blueDark }]}
-            onPress={() => nav.navigate('Booking', { partnerId: partners[0].id })}
+            style={({ pressed }) => [styles.bookBtn, pressed && { backgroundColor: colors.blueDark }, tenants.length === 0 && { opacity: 0.6 }]}
+            onPress={() => tenants[0] && nav.navigate('Booking', { tenantId: tenants[0].id })}
+            disabled={tenants.length === 0}
           >
             <Feather name="droplet" size={20} color="#fff" />
             <Text style={styles.bookBtnText}>Book a Wash</Text>
           </Pressable>
 
           {/* Voucher progress */}
-          <Card style={styles.progressCard}>
-            <View style={styles.rowBetween}>
-              <View style={styles.row}>
-                <LinearGradient colors={[colors.amber, colors.amber2]} style={styles.rCoin}>
-                  <Text style={styles.rCoinText}>R</Text>
-                </LinearGradient>
-                <Text style={styles.progressTitle}>R100 voucher progress</Text>
-              </View>
-              <Text style={styles.progressCount}>{voucher.washCount}/5</Text>
-            </View>
-            <View style={styles.dotsRow}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <View key={i} style={[styles.dot, i < voucher.washCount ? styles.dotFilled : styles.dotEmpty]}>
-                  {i < voucher.washCount ? <LinearGradient colors={[colors.amber, colors.amber2]} style={StyleSheet.absoluteFill} /> : null}
+          {progress && (
+            <Card style={styles.progressCard}>
+              <View style={styles.rowBetween}>
+                <View style={styles.row}>
+                  <LinearGradient colors={[colors.amber, colors.amber2]} style={styles.rCoin}>
+                    <Text style={styles.rCoinText}>R</Text>
+                  </LinearGradient>
+                  <Text style={styles.progressTitle}>{money(progress.voucher_amount)} voucher progress</Text>
                 </View>
-              ))}
-            </View>
-            <Text style={styles.progressSub}>
-              {washRemaining} more washes to earn a R100 voucher — redeemable at any partner.
-            </Text>
-          </Card>
+                <Text style={styles.progressCount}>{progress.wash_count}/{progress.threshold}</Text>
+              </View>
+              <View style={styles.dotsRow}>
+                {Array.from({ length: progress.threshold }).map((_, i) => (
+                  <View key={i} style={[styles.dot, i < progress.wash_count ? null : styles.dotEmpty]}>
+                    {i < progress.wash_count ? <LinearGradient colors={[colors.amber, colors.amber2]} style={StyleSheet.absoluteFill} /> : null}
+                  </View>
+                ))}
+              </View>
+              <Text style={styles.progressSub}>
+                {progress.remaining} more wash{progress.remaining === 1 ? '' : 'es'} to earn a {money(progress.voucher_amount)} voucher — redeemable at any partner.
+              </Text>
+            </Card>
+          )}
 
-          {/* Rate recent wash */}
           <Pressable style={styles.rateCard} onPress={() => nav.navigate('Rating')}>
-            <View style={styles.rateIcon}>
-              <Stars value={1} size={20} gap={0} />
-            </View>
+            <View style={styles.rateIcon}><Stars value={1} size={20} gap={0} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.rateTitle}>Rate your recent wash</Text>
-              <Text style={styles.rateSub}>{lastWash.pkg} · {lastWash.partner}</Text>
+              <Text style={styles.rateSub}>Share feedback on a completed wash</Text>
             </View>
             <Feather name="chevron-right" size={20} color="#6E80A0" />
           </Pressable>
@@ -138,49 +171,46 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {mapView ? (
+          {loading ? (
+            <Loading />
+          ) : error ? (
+            <ErrorState message={error} onRetry={reload} />
+          ) : mapView ? (
             <View style={styles.mapMock}>
-              <View style={styles.mapLabel}>
-                <Text style={styles.mapLabelText}>Johannesburg</Text>
-              </View>
+              <View style={styles.mapLabel}><Text style={styles.mapLabelText}>Johannesburg</Text></View>
               <View style={styles.mapMe} />
-              {partners.map((p) => (
+              {tenants.slice(0, 5).map((t, i) => (
                 <Pressable
-                  key={p.id}
-                  onPress={() => nav.navigate('Booking', { partnerId: p.id })}
-                  style={[styles.pin, { top: p.mapTop as any, left: p.mapLeft as any }]}
+                  key={t.id}
+                  onPress={() => nav.navigate('Booking', { tenantId: t.id })}
+                  style={[styles.pin, { top: PIN_POS[i].top as any, left: PIN_POS[i].left as any }]}
                 >
-                  <View style={[styles.pinBubble, p.featured ? styles.pinFeatured : styles.pinNormal]}>
-                    <Text style={[styles.pinText, { color: p.featured ? colors.navy : '#fff' }]}>{p.price}</Text>
+                  <View style={[styles.pinBubble, i === 0 ? styles.pinFeatured : styles.pinNormal]}>
+                    <Text style={[styles.pinText, { color: i === 0 ? colors.navy : '#fff' }]}>{money(t.from_price)}</Text>
                   </View>
                 </Pressable>
               ))}
             </View>
           ) : (
-            partners.map((p) => (
-              <Pressable
-                key={p.id}
-                style={styles.partnerCard}
-                onPress={() => nav.navigate('Booking', { partnerId: p.id })}
-              >
+            tenants.map((t) => (
+              <Pressable key={t.id} style={styles.partnerCard} onPress={() => nav.navigate('Booking', { tenantId: t.id })}>
                 <LinearGradient colors={[colors.navy3, colors.navy4]} style={styles.partnerThumb}>
-                  <Feather name="image" size={18} color={colors.onNavyMute} />
+                  <Feather name={t.type === 'mobile_wash' ? 'truck' : 'image'} size={18} color={colors.onNavyMute} />
                 </LinearGradient>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.partnerName}>{p.name}</Text>
+                  <Text style={styles.partnerName}>{t.name}</Text>
                   <View style={[styles.row, { marginTop: 3, gap: 5 }]}>
                     <Feather name="map-pin" size={12} color={colors.inkMute} />
-                    <Text style={styles.partnerArea}>{p.area}</Text>
+                    <Text style={styles.partnerArea}>{t.type === 'mobile_wash' ? 'Mobile · comes to you' : `${t.suburb ?? ''}${t.city ? ', ' + t.city : ''}`}</Text>
                   </View>
                   <View style={[styles.row, { marginTop: 8, gap: 7 }]}>
                     <View style={styles.row}>
                       <Stars value={1} size={13} gap={0} />
-                      <Text style={styles.ratingText}> {p.rating}</Text>
+                      <Text style={styles.ratingText}> {t.rating_avg.toFixed(1)}</Text>
                     </View>
+                    {t.distance_km != null && (<><Text style={styles.sep}>·</Text><Text style={styles.partnerMeta}>{t.distance_km} km</Text></>)}
                     <Text style={styles.sep}>·</Text>
-                    <Text style={styles.partnerMeta}>{p.dist}</Text>
-                    <Text style={styles.sep}>·</Text>
-                    <Text style={styles.partnerMeta}>from {p.price}</Text>
+                    <Text style={styles.partnerMeta}>from {money(t.from_price)}</Text>
                   </View>
                 </View>
                 <Feather name="chevron-right" size={20} color="#C2CAD4" />
@@ -218,7 +248,7 @@ const styles = StyleSheet.create({
   balanceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 2 },
   balanceValue: { color: '#fff', fontFamily: font.displayBold, fontSize: 46 },
   balanceReady: { color: colors.amber, fontFamily: font.display, fontSize: 15 },
-  cardNumber: { color: colors.onNavySoft, fontFamily: font.display, fontSize: 15, letterSpacing: 2, marginTop: 22 },
+  cardNumber: { color: colors.onNavySoft, fontFamily: font.display, fontSize: 13, letterSpacing: 1, marginTop: 22 },
 
   bookBtn: { marginTop: 18, backgroundColor: colors.blue, borderRadius: radius.md, paddingVertical: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, ...shadow.blue },
   bookBtnText: { color: '#fff', fontSize: 16, fontFamily: font.display },
@@ -230,7 +260,6 @@ const styles = StyleSheet.create({
   progressCount: { fontFamily: font.displayBold, fontSize: 13, color: colors.amberInk },
   dotsRow: { flexDirection: 'row', gap: 9, marginTop: 14 },
   dot: { flex: 1, height: 13, borderRadius: 999, overflow: 'hidden' },
-  dotFilled: {},
   dotEmpty: { borderWidth: 1.5, borderColor: '#C9D2DE', borderStyle: 'dashed' },
   progressSub: { marginTop: 11, color: colors.inkSoft, fontSize: 12, fontFamily: font.body },
 
@@ -249,7 +278,7 @@ const styles = StyleSheet.create({
   partnerCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.lg, padding: 12, marginBottom: 12, ...shadow.soft },
   partnerThumb: { width: 62, height: 62, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   partnerName: { fontFamily: font.display, fontSize: 15, color: colors.ink },
-  partnerArea: { color: colors.inkSoft, fontSize: 12.5, fontFamily: font.body },
+  partnerArea: { color: colors.inkSoft, fontSize: 12.5, fontFamily: font.body, flexShrink: 1 },
   ratingText: { color: colors.ink, fontFamily: font.display, fontSize: 12.5 },
   partnerMeta: { color: colors.inkSoft, fontSize: 12.5, fontFamily: font.body },
   sep: { color: '#D2D8E0' },

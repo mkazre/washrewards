@@ -1,18 +1,21 @@
 export type RootStackParamList = {
   Tabs: undefined;
-  Booking: { partnerId: string };
+  Booking: { tenantId: number };
   Confirmation: {
     partnerName: string;
     vehicleName: string;
-    pkgName: string;
-    pkgPrice: string;
-    slot: string;
+    serviceName: string;
+    amount: string;
+    scheduledLabel: string;
     payLabel: string;
     receiptNo: string;
-    washNext: number;
+    washCount: number;
+    threshold: number;
+    voucherEarned: boolean;
   };
   Notifications: undefined;
   Rating: undefined;
+  AddVehicle: undefined;
 };
 
 export type TabParamList = {

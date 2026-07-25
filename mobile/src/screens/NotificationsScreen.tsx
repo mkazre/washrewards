@@ -1,52 +1,51 @@
 import React from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import { colors, font, radius, shadow } from '../theme';
+import { Loading, ErrorState, EmptyState } from '../components/ui';
+import { useAuth } from '../auth/AuthContext';
+import { useAsync } from '../hooks/useAsync';
+import * as api from '../api/endpoints';
+import { AppNotification } from '../api/types';
+import { relativeDay, timeOf } from '../utils/format';
 
-type Item = {
-  icon: keyof typeof Feather.glyphMap;
-  iconBg: string;
-  iconColor: string;
-  gradient?: boolean;
-  title: string;
-  body: string;
-  when: string;
-  unread?: boolean;
-};
+function iconFor(type: string): keyof typeof Feather.glyphMap {
+  const t = type.toLowerCase();
+  if (t.includes('booking')) return 'check';
+  if (t.includes('voucher') || t.includes('reward')) return 'gift';
+  if (t.includes('wash') || t.includes('loyalty')) return 'award';
+  if (t.includes('promo') || t.includes('offer')) return 'tag';
+  return 'bell';
+}
 
-const today: Item[] = [
-  { icon: 'check', iconBg: '#EAF1FF', iconColor: colors.blue, title: 'Booking confirmed', body: 'Full Valet at Sparkle & Shine is booked for today, 14:00.', when: '2 min ago', unread: true },
-  { icon: 'award', iconBg: '', iconColor: '', gradient: true, title: 'Wash counted', body: 'Your Full Valet counts toward your next R100 voucher — 3 of 5 washes done.', when: '2 min ago', unread: true },
-  { icon: 'gift', iconBg: '#FEF3DC', iconColor: '#B45309', title: 'R100 voucher ready', body: 'You have a R100 voucher ready to redeem at any participating partner.', when: '1 hour ago' },
-];
+function humanize(type: string): string {
+  return type.replace(/([A-Z])/g, ' $1').replace(/[_-]/g, ' ').replace(/notification/i, '').trim() || 'Notification';
+}
 
-const earlier: Item[] = [
-  { icon: 'star', iconBg: '#EEF1F6', iconColor: colors.amber, title: 'Almost there!', body: "Two more paid washes and you'll earn another R100 voucher.", when: 'Mon' },
-  { icon: 'tag', iconBg: '#EAF1FF', iconColor: colors.blue, title: 'Weekend offer', body: 'AquaJet Auto Spa: 20% off all packages this weekend only.', when: 'Sun' },
-];
+function isToday(iso: string) {
+  const d = new Date(iso);
+  const n = new Date();
+  return d.toDateString() === n.toDateString();
+}
 
-function Row({ item }: { item: Item }) {
+function Row({ n }: { n: AppNotification }) {
+  const title = n.data?.title || humanize(n.type);
+  const body = n.data?.body || n.data?.message || '';
+  const unread = !n.read_at;
   return (
     <View style={styles.card}>
-      {item.gradient ? (
-        <LinearGradient colors={['#FEF3DC', '#FDE9BE']} style={styles.icon}>
-          <LinearGradient colors={[colors.amber, colors.amber2]} style={styles.coin} />
-        </LinearGradient>
-      ) : (
-        <View style={[styles.icon, { backgroundColor: item.iconBg }]}>
-          <Feather name={item.icon} size={19} color={item.iconColor} />
-        </View>
-      )}
-      <View style={{ flex: 1 }}>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.body}>{item.body}</Text>
-        <Text style={styles.when}>{item.when}</Text>
+      <View style={[styles.icon, { backgroundColor: unread ? '#EAF1FF' : '#EEF1F6' }]}>
+        <Feather name={iconFor(n.type)} size={19} color={unread ? colors.blue : '#5C6B7D'} />
       </View>
-      {item.unread ? <View style={styles.unread} /> : null}
+      <View style={{ flex: 1 }}>
+        <Text style={styles.title}>{title}</Text>
+        {!!body && <Text style={styles.body}>{body}</Text>}
+        <Text style={styles.when}>{isToday(n.created_at) ? timeOf(n.created_at) : relativeDay(n.created_at)}</Text>
+      </View>
+      {unread ? <View style={styles.unread} /> : null}
     </View>
   );
 }
@@ -54,6 +53,17 @@ function Row({ item }: { item: Item }) {
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const nav = useNavigation();
+  const { token } = useAuth();
+  const { data, loading, error, reload } = useAsync(() => api.getNotifications(token!), [token]);
+
+  const items = data ?? [];
+  const today = items.filter((n) => isToday(n.created_at));
+  const earlier = items.filter((n) => !isToday(n.created_at));
+
+  const markAll = async () => {
+    try { await api.markAllNotificationsRead(token!); reload(); } catch { /* ignore */ }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -61,15 +71,23 @@ export default function NotificationsScreen() {
           <Feather name="chevron-left" size={20} color="#fff" />
         </Pressable>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <Text style={styles.markRead}>Mark all read</Text>
+        {items.length > 0 && <Pressable onPress={markAll}><Text style={styles.markRead}>Mark all read</Text></Pressable>}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 24 }}>
-        <Text style={styles.section}>TODAY</Text>
-        {today.map((it, i) => <Row key={i} item={it} />)}
-        <Text style={[styles.section, { marginTop: 20 }]}>EARLIER THIS WEEK</Text>
-        {earlier.map((it, i) => <Row key={i} item={it} />)}
-      </ScrollView>
+      {loading ? (
+        <Loading />
+      ) : error ? (
+        <ErrorState message={error} onRetry={reload} />
+      ) : items.length === 0 ? (
+        <EmptyState title="No notifications yet" sub="Booking updates, voucher progress and offers will show up here." />
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 24 }}>
+          {today.length > 0 && <Text style={styles.section}>TODAY</Text>}
+          {today.map((n) => <Row key={n.id} n={n} />)}
+          {earlier.length > 0 && <Text style={[styles.section, today.length ? { marginTop: 20 } : null]}>EARLIER</Text>}
+          {earlier.map((n) => <Row key={n.id} n={n} />)}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -83,7 +101,6 @@ const styles = StyleSheet.create({
   section: { fontFamily: font.display, fontSize: 12, letterSpacing: 0.5, color: colors.inkFaint, marginBottom: 10 },
   card: { flexDirection: 'row', gap: 13, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, padding: 14, marginBottom: 10, ...shadow.soft },
   icon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  coin: { width: 18, height: 18, borderRadius: 9 },
   title: { fontFamily: font.display, fontSize: 14, color: colors.ink },
   body: { color: colors.inkSoft, fontSize: 12.5, marginTop: 3, lineHeight: 18, fontFamily: font.body },
   when: { color: '#A6B0BC', fontSize: 11, marginTop: 6, fontFamily: font.body },

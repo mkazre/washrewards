@@ -15,6 +15,7 @@ import BookingScreen from '../screens/BookingScreen';
 import ConfirmationScreen from '../screens/ConfirmationScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
 import RatingScreen from '../screens/RatingScreen';
+import AddVehicleScreen from '../screens/AddVehicleScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
@@ -69,6 +70,7 @@ export default function RootNavigator() {
       <Stack.Screen name="Confirmation" component={ConfirmationScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ presentation: 'card' }} />
       <Stack.Screen name="Rating" component={RatingScreen} options={{ presentation: 'card' }} />
+      <Stack.Screen name="AddVehicle" component={AddVehicleScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );
 }

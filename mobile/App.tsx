@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
@@ -19,12 +19,33 @@ import {
 
 import { colors } from './src/theme';
 import { ToastProvider } from './src/components/Toast';
+import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import RootNavigator from './src/navigation/RootNavigator';
+import AuthScreen from './src/screens/AuthScreen';
 
 const navTheme = {
   ...DefaultTheme,
   colors: { ...DefaultTheme.colors, background: colors.bg, primary: colors.blue },
 };
+
+function Splash() {
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator color={colors.amber} />
+    </View>
+  );
+}
+
+function Gate() {
+  const { booting, token } = useAuth();
+  if (booting) return <Splash />;
+  if (!token) return <AuthScreen />;
+  return (
+    <NavigationContainer theme={navTheme}>
+      <RootNavigator />
+    </NavigationContainer>
+  );
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -38,17 +59,15 @@ export default function App() {
     Inter_700Bold,
   });
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: colors.navy }} />;
-  }
+  if (!fontsLoaded) return <Splash />;
 
   return (
     <SafeAreaProvider>
       <ToastProvider>
-        <NavigationContainer theme={navTheme}>
+        <AuthProvider>
           <StatusBar style="light" />
-          <RootNavigator />
-        </NavigationContainer>
+          <Gate />
+        </AuthProvider>
       </ToastProvider>
     </SafeAreaProvider>
   );

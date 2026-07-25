@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
@@ -7,101 +7,179 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { colors, font, radius, shadow } from '../theme';
-import { Stars } from '../components/ui';
-import { partners, packages, slots, payMethods, partnerReviews, vehicle, voucher } from '../data/mock';
+import { Stars, Loading, ErrorState } from '../components/ui';
 import { RootStackParamList } from '../navigation/types';
+import { useAuth } from '../auth/AuthContext';
+import { useAsync } from '../hooks/useAsync';
+import * as api from '../api/endpoints';
+import { ApiError } from '../api/client';
+import { money, num, slotToISO, relativeDay } from '../utils/format';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+const SLOTS = [
+  { label: '09:30' }, { label: '11:00' }, { label: '12:30', disabled: true },
+  { label: '14:00' }, { label: '15:30' }, { label: '17:00' },
+];
+const PAY_METHODS = [
+  { brand: 'VISA', label: 'Visa', hint: '•••• 4827', method: 'card' as const },
+  { brand: 'MC', label: 'Mastercard', hint: '•••• 1190', method: 'card' as const },
+  { brand: 'EFT', label: 'Instant EFT', hint: 'Pay from your bank', method: 'eft' as const },
+];
 
 export default function BookingScreen() {
   const insets = useSafeAreaInsets();
   const nav = useNavigation<Nav>();
-  const route = useRoute<RouteProp<RootStackParamList, 'Booking'>>();
-  const partner = partners.find((p) => p.id === route.params.partnerId) ?? partners[0];
+  const { tenantId } = useRoute<RouteProp<RootStackParamList, 'Booking'>>().params;
+  const { token } = useAuth();
 
-  const [pkg, setPkg] = useState(1);
-  const [slot, setSlot] = useState(0);
-  const [pay, setPay] = useState(0);
+  const [serviceIdx, setServiceIdx] = useState(0);
+  const [slotIdx, setSlotIdx] = useState(0);
+  const [payIdx, setPayIdx] = useState(0);
+  const [address, setAddress] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const selPkg = packages[pkg];
-  const selSlot = slots[slot];
-  const pm = payMethods[pay];
-  const payLabel = pm.last ? `${pm.label} •••• ${pm.last}` : pm.label;
+  const { data, loading, error, reload } = useAsync(async () => {
+    const [tenant, vehicles] = await Promise.all([api.getTenant(tenantId), api.getVehicles(token!)]);
+    return { tenant, vehicle: vehicles.find((v) => v.is_default) ?? vehicles[0] ?? null };
+  }, [tenantId, token]);
 
-  const confirm = () => {
-    if (selSlot.disabled) return;
-    nav.navigate('Confirmation', {
-      partnerName: partner.name,
-      vehicleName: vehicle.name,
-      pkgName: selPkg.name,
-      pkgPrice: selPkg.price,
-      slot: selSlot.label,
-      payLabel,
-      receiptNo: 'WR-24819',
-      washNext: Math.min(voucher.washCount + 1, 5),
-    });
+  if (loading) return <View style={{ flex: 1, backgroundColor: colors.surface }}><View style={{ paddingTop: insets.top + 40 }}><Loading /></View></View>;
+  if (error || !data) return <View style={{ flex: 1, backgroundColor: colors.surface }}><View style={{ paddingTop: insets.top + 40 }}><ErrorState message={error || 'Not found'} onRetry={reload} /></View></View>;
+
+  const { tenant, vehicle } = data;
+  const services = tenant.services ?? [];
+  const isMobile = tenant.type === 'mobile_wash';
+  const service = services[serviceIdx];
+  const slot = SLOTS[slotIdx];
+  const pm = PAY_METHODS[payIdx];
+  const travelFee = isMobile ? num(tenant.travel_fee) : 0;
+  const total = num(service?.price) + travelFee;
+
+  const confirm = async () => {
+    if (!service) return;
+    if (!vehicle) {
+      Alert.alert('Add a vehicle', 'Add your vehicle before booking a wash.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Add vehicle', onPress: () => nav.navigate('AddVehicle') },
+      ]);
+      return;
+    }
+    if (isMobile && !address.trim()) {
+      Alert.alert('Address needed', 'Enter the address where the mobile wash should come to.');
+      return;
+    }
+    setBusy(true);
+    try {
+      const iso = slotToISO(slot.label);
+      const booking = await api.createBooking(token!, {
+        tenant_id: tenant.id,
+        service_id: service.id,
+        vehicle_id: vehicle.id,
+        scheduled_at: iso,
+        payment_method: pm.method,
+        service_address: isMobile ? address.trim() : undefined,
+      });
+      const pay = await api.payBooking(token!, booking.id);
+      let washCount = 0, threshold = 5;
+      try { const v = await api.getVouchers(token!); washCount = v.progress.wash_count; threshold = v.progress.threshold; } catch { /* non-fatal */ }
+
+      const tomorrow = new Date(iso).getDate() !== new Date().getDate();
+      nav.navigate('Confirmation', {
+        partnerName: tenant.name,
+        vehicleName: `${vehicle.name} · ${vehicle.plate}`,
+        serviceName: service.name,
+        amount: money(pay.booking.total_amount),
+        scheduledLabel: `${tomorrow ? 'Tomorrow' : 'Today'} at ${slot.label}`,
+        payLabel: pm.hint ? `${pm.label} ${pm.hint}` : pm.label,
+        receiptNo: pay.booking.receipt_no,
+        washCount, threshold,
+        voucherEarned: !!pay.voucher_earned,
+      });
+    } catch (e) {
+      const err = e as ApiError;
+      const first = err.errors ? Object.values(err.errors)[0]?.[0] : undefined;
+      Alert.alert('Could not complete booking', first || err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-        {/* Hero */}
         <LinearGradient colors={[colors.navy3, colors.navy4]} style={styles.hero}>
           <Pressable style={[styles.backBtn, { top: insets.top + 8 }]} onPress={() => nav.goBack()}>
             <Feather name="chevron-left" size={20} color="#fff" />
           </Pressable>
           <View style={styles.openBadge}>
             <View style={styles.openDot} />
-            <Text style={styles.openText}>Open now</Text>
+            <Text style={styles.openText}>{isMobile ? 'Comes to you' : 'Open now'}</Text>
           </View>
-          <Feather name="image" size={30} color="rgba(255,255,255,0.4)" style={{ alignSelf: 'center', marginTop: 70 }} />
+          <Feather name={isMobile ? 'truck' : 'image'} size={30} color="rgba(255,255,255,0.4)" style={{ alignSelf: 'center', marginTop: 70 }} />
         </LinearGradient>
 
         <View style={{ paddingHorizontal: 22, paddingTop: 20 }}>
           <View style={styles.rowBetween}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.partnerName}>{partner.name}</Text>
+              <Text style={styles.partnerName}>{tenant.name}</Text>
               <View style={[styles.row, { marginTop: 5, gap: 7 }]}>
                 <Feather name="map-pin" size={13} color={colors.inkMute} />
-                <Text style={styles.metaText}>{partner.area} · {partner.dist}</Text>
+                <Text style={styles.metaText}>
+                  {isMobile ? `Mobile · ${tenant.travel_radius_km ?? ''} km radius` : `${tenant.suburb ?? ''}${tenant.city ? ', ' + tenant.city : ''}`}
+                </Text>
               </View>
             </View>
             <View style={styles.ratingBadge}>
               <Stars value={1} size={13} gap={0} />
-              <Text style={styles.ratingBadgeText}>{partner.rating}</Text>
+              <Text style={styles.ratingBadgeText}>{tenant.rating_avg.toFixed(1)}</Text>
             </View>
           </View>
 
           {/* Vehicle */}
-          <View style={styles.vehicleRow}>
+          <Pressable style={styles.vehicleRow} onPress={() => nav.navigate('AddVehicle')}>
             <Feather name="truck" size={20} color="#5C6B7D" />
             <View style={{ flex: 1 }}>
               <Text style={styles.vehicleLabel}>Vehicle</Text>
-              <Text style={styles.vehicleName}>{vehicle.name} · {vehicle.plate}</Text>
+              <Text style={styles.vehicleName}>{vehicle ? `${vehicle.name} · ${vehicle.plate}` : 'Add your vehicle'}</Text>
             </View>
-            <Text style={styles.change}>Change</Text>
-          </View>
+            <Text style={styles.change}>{vehicle ? 'Change' : 'Add'}</Text>
+          </Pressable>
+
+          {/* Mobile address */}
+          {isMobile && (
+            <View style={{ marginTop: 14 }}>
+              <Text style={styles.h3}>Where should we come?</Text>
+              <TextInput
+                value={address}
+                onChangeText={setAddress}
+                placeholder="Street address, suburb"
+                placeholderTextColor={colors.inkMute}
+                style={styles.addressInput}
+              />
+              {travelFee > 0 && <Text style={styles.travelNote}>Includes a {money(travelFee)} call-out fee.</Text>}
+            </View>
+          )}
 
           {/* Packages */}
           <Text style={styles.h3}>Choose a package</Text>
-          {packages.map((pk, i) => {
-            const sel = i === pkg;
+          {services.length === 0 && <Text style={styles.metaText}>No packages available yet.</Text>}
+          {services.map((pk, i) => {
+            const sel = i === serviceIdx;
             return (
-              <Pressable key={pk.id} onPress={() => setPkg(i)} style={[styles.pkgCard, sel ? styles.pkgSel : styles.pkgUnsel]}>
+              <Pressable key={pk.id} onPress={() => setServiceIdx(i)} style={[styles.pkgCard, sel ? styles.pkgSel : styles.pkgUnsel]}>
                 <View style={[styles.radio, sel ? styles.radioSel : styles.radioUnsel]}>
                   {sel ? <Feather name="check" size={13} color="#fff" /> : null}
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={[styles.row, { gap: 8 }]}>
                     <Text style={styles.pkgName}>{pk.name}</Text>
-                    {pk.popular ? (
-                      <View style={styles.popular}><Text style={styles.popularText}>POPULAR</Text></View>
-                    ) : null}
+                    {pk.is_popular ? <View style={styles.popular}><Text style={styles.popularText}>POPULAR</Text></View> : null}
                   </View>
-                  <Text style={styles.pkgDesc}>{pk.desc}</Text>
-                  <Text style={styles.pkgTime}>≈ {pk.time}</Text>
+                  {pk.description ? <Text style={styles.pkgDesc}>{pk.description}</Text> : null}
+                  {pk.duration_minutes ? <Text style={styles.pkgTime}>≈ {pk.duration_minutes} min</Text> : null}
                 </View>
-                <Text style={styles.pkgPrice}>{pk.price}</Text>
+                <Text style={styles.pkgPrice}>{money(pk.price)}</Text>
               </Pressable>
             );
           })}
@@ -109,59 +187,58 @@ export default function BookingScreen() {
           {/* Slots */}
           <View style={[styles.rowBetween, { marginTop: 24, marginBottom: 12 }]}>
             <Text style={styles.h3}>Available today</Text>
-            <Text style={styles.metaText}>Mon, 23 Jun</Text>
           </View>
           <View style={styles.slotGrid}>
-            {slots.map((s, i) => {
-              const sel = i === slot;
+            {SLOTS.map((s, i) => {
+              const sel = i === slotIdx;
               return (
-                <Pressable
-                  key={s.label}
-                  onPress={() => !s.disabled && setSlot(i)}
-                  style={[styles.slot, s.disabled ? styles.slotDisabled : sel ? styles.slotSel : styles.slotUnsel]}
-                >
-                  <Text style={[styles.slotText, s.disabled ? styles.slotTextDisabled : sel ? styles.slotTextSel : styles.slotTextUnsel]}>
-                    {s.label}
-                  </Text>
+                <Pressable key={s.label} onPress={() => !s.disabled && setSlotIdx(i)} style={[styles.slot, s.disabled ? styles.slotDisabled : sel ? styles.slotSel : styles.slotUnsel]}>
+                  <Text style={[styles.slotText, s.disabled ? styles.slotTextDisabled : sel ? styles.slotTextSel : styles.slotTextUnsel]}>{s.label}</Text>
                 </Pressable>
               );
             })}
           </View>
 
           {/* Reviews */}
-          <Text style={[styles.h3, { marginTop: 26 }]}>Verified reviews</Text>
-          <View style={[styles.row, { gap: 12, marginBottom: 14 }]}>
-            <Text style={styles.reviewBig}>{partner.rating}</Text>
-            <View>
-              <Stars value={5} size={14} />
-              <Text style={styles.reviewCount}>326 verified reviews</Text>
-            </View>
-          </View>
-          {partnerReviews.map((rv, i) => (
-            <View key={i} style={styles.reviewCard}>
-              <View style={[styles.row, { gap: 8 }]}>
-                <Text style={styles.reviewer}>{rv.name}</Text>
-                <View style={styles.verified}>
-                  <Feather name="check" size={10} color={colors.good} />
-                  <Text style={styles.verifiedText}>Verified</Text>
+          {tenant.reviews && tenant.reviews.length > 0 && (
+            <>
+              <Text style={[styles.h3, { marginTop: 26 }]}>Verified reviews</Text>
+              <View style={[styles.row, { gap: 12, marginBottom: 14 }]}>
+                <Text style={styles.reviewBig}>{tenant.rating_avg.toFixed(1)}</Text>
+                <View>
+                  <Stars value={5} size={14} />
+                  <Text style={styles.reviewCount}>{tenant.rating_count} verified reviews</Text>
                 </View>
-                <Text style={styles.reviewWhen}>{rv.when}</Text>
               </View>
-              <View style={{ marginTop: 8 }}><Stars value={rv.stars} size={13} /></View>
-              <Text style={styles.reviewText}>{rv.text}</Text>
-            </View>
-          ))}
+              {tenant.reviews.slice(0, 3).map((rv) => (
+                <View key={rv.id} style={styles.reviewCard}>
+                  <View style={[styles.row, { gap: 8 }]}>
+                    <Text style={styles.reviewer}>{rv.user_name ?? 'Customer'}</Text>
+                    {rv.is_verified && (
+                      <View style={styles.verified}>
+                        <Feather name="check" size={10} color={colors.good} />
+                        <Text style={styles.verifiedText}>Verified</Text>
+                      </View>
+                    )}
+                    <Text style={styles.reviewWhen}>{relativeDay(rv.created_at)}</Text>
+                  </View>
+                  <View style={{ marginTop: 8 }}><Stars value={rv.rating} size={13} /></View>
+                  {rv.comment ? <Text style={styles.reviewText}>{rv.comment}</Text> : null}
+                </View>
+              ))}
+            </>
+          )}
 
           {/* Payment */}
           <Text style={[styles.h3, { marginTop: 26 }]}>Payment method</Text>
-          {payMethods.map((m, i) => {
-            const sel = i === pay;
+          {PAY_METHODS.map((m, i) => {
+            const sel = i === payIdx;
             return (
-              <Pressable key={m.brand} onPress={() => setPay(i)} style={[styles.payCard, sel ? styles.pkgSel : styles.pkgUnsel]}>
+              <Pressable key={m.brand} onPress={() => setPayIdx(i)} style={[styles.payCard, sel ? styles.pkgSel : styles.pkgUnsel]}>
                 <View style={styles.payBrand}><Text style={styles.payBrandText}>{m.brand}</Text></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.payLabel}>{m.label}</Text>
-                  <Text style={styles.payNum}>{m.last ? `•••• ${m.last}` : 'Pay from your bank'}</Text>
+                  <Text style={styles.payNum}>{m.hint}</Text>
                 </View>
                 <View style={[styles.radio, sel ? styles.radioSel : styles.radioUnsel]}>
                   {sel ? <Feather name="check" size={12} color="#fff" /> : null}
@@ -180,16 +257,16 @@ export default function BookingScreen() {
       <View style={[styles.payBar, { paddingBottom: insets.bottom + 16 }]}>
         <View style={[styles.rowBetween, { marginBottom: 12 }]}>
           <View>
-            <Text style={styles.payBarMeta}>{selPkg.name} · {selSlot.label}</Text>
-            <Text style={styles.payBarPrice}>{selPkg.price}</Text>
+            <Text style={styles.payBarMeta}>{service?.name ?? '—'} · {slot.label}</Text>
+            <Text style={styles.payBarPrice}>{money(total)}</Text>
           </View>
           <View style={[styles.row, { gap: 5 }]}>
             <LinearGradient colors={[colors.amber, colors.amber2]} style={styles.miniCoin} />
-            <Text style={styles.countsText}>Counts toward R100 voucher</Text>
+            <Text style={styles.countsText}>Counts toward voucher</Text>
           </View>
         </View>
-        <Pressable style={styles.confirmBtn} onPress={confirm}>
-          <Text style={styles.confirmText}>Confirm & Pay {selPkg.price}</Text>
+        <Pressable style={[styles.confirmBtn, busy && { opacity: 0.7 }]} onPress={confirm} disabled={busy || !service}>
+          {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.confirmText}>Confirm & Pay {money(total)}</Text>}
         </Pressable>
       </View>
     </View>
@@ -206,7 +283,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
   rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   partnerName: { fontFamily: font.displayBold, fontSize: 22, color: colors.ink },
-  metaText: { color: colors.inkSoft, fontSize: 13, fontFamily: font.body },
+  metaText: { color: colors.inkSoft, fontSize: 13, fontFamily: font.body, flexShrink: 1 },
   ratingBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.amberTint, borderRadius: 11, paddingHorizontal: 11, paddingVertical: 7 },
   ratingBadgeText: { color: colors.amberInk, fontFamily: font.displayBold, fontSize: 13 },
 
@@ -214,6 +291,9 @@ const styles = StyleSheet.create({
   vehicleLabel: { fontSize: 11.5, color: colors.inkFaint, fontFamily: font.body },
   vehicleName: { fontFamily: font.display, fontSize: 14, color: colors.ink },
   change: { color: colors.blue, fontSize: 12.5, fontFamily: font.bodySemi },
+
+  addressInput: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line2, borderRadius: radius.md, paddingHorizontal: 14, paddingVertical: 13, color: colors.ink, fontSize: 14.5, fontFamily: font.body },
+  travelNote: { color: colors.amberInk, fontSize: 12, marginTop: 6, fontFamily: font.body },
 
   h3: { fontFamily: font.display, fontSize: 16, color: colors.ink, marginTop: 24, marginBottom: 12 },
   pkgCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: radius.lg, padding: 15, marginBottom: 12, borderWidth: 1.5 },

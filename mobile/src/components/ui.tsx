@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, TextStyle, StyleProp, ActivityIndicator, Pressable } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { colors, radius, shadow, font } from '../theme';
 
@@ -40,6 +40,36 @@ export function H3({ children, style }: { children: React.ReactNode; style?: Sty
   return <Text style={[styles.h3, style]}>{children}</Text>;
 }
 
+export function Loading({ dark = false }: { dark?: boolean }) {
+  return (
+    <View style={styles.center}>
+      <ActivityIndicator color={dark ? '#fff' : colors.blue} />
+    </View>
+  );
+}
+
+export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <View style={styles.center}>
+      <Text style={styles.errText}>{message}</Text>
+      {onRetry && (
+        <Pressable onPress={onRetry} style={styles.retry}>
+          <Text style={styles.retryText}>Try again</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+export function EmptyState({ title, sub }: { title: string; sub?: string }) {
+  return (
+    <View style={styles.center}>
+      <Text style={styles.emptyTitle}>{title}</Text>
+      {sub && <Text style={styles.emptySub}>{sub}</Text>}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
@@ -64,4 +94,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.ink,
   },
+  center: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  errText: { color: colors.inkSoft, fontSize: 14, textAlign: 'center', fontFamily: font.body, paddingHorizontal: 24 },
+  retry: { backgroundColor: colors.blue, borderRadius: radius.sm, paddingHorizontal: 18, paddingVertical: 10 },
+  retryText: { color: '#fff', fontFamily: font.display, fontSize: 13.5 },
+  emptyTitle: { color: colors.ink, fontFamily: font.display, fontSize: 15 },
+  emptySub: { color: colors.inkFaint, fontSize: 13, fontFamily: font.body, textAlign: 'center', paddingHorizontal: 24 },
 });

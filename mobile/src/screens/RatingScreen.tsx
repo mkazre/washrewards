@@ -1,27 +1,60 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 import { colors, font, radius, shadow } from '../theme';
-import { Card, Star } from '../components/ui';
-import { lastWash, ratingCats } from '../data/mock';
+import { Card, Star, Loading, ErrorState, EmptyState } from '../components/ui';
+import { useAuth } from '../auth/AuthContext';
+import { useAsync } from '../hooks/useAsync';
+import * as api from '../api/endpoints';
+import { ApiError } from '../api/client';
 import { useToast } from '../components/Toast';
+
+const CATS = [
+  { label: 'Cleanliness', key: 'cleanliness_rating' as const },
+  { label: 'Staff professionalism', key: 'staff_rating' as const },
+  { label: 'Value for money', key: 'value_rating' as const },
+  { label: 'Waiting time', key: 'wait_time_rating' as const },
+];
 
 export default function RatingScreen() {
   const insets = useSafeAreaInsets();
   const nav = useNavigation();
   const toast = useToast();
+  const { token } = useAuth();
+
   const [stars, setStars] = useState(0);
   const [cats, setCats] = useState<Record<string, number>>({});
-  const [review, setReview] = useState('');
+  const [comment, setComment] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const canSubmit = stars > 0;
-  const submit = () => {
-    if (!canSubmit) return;
-    toast('Review submitted · Verified');
-    nav.goBack();
+  const { data, loading, error, reload } = useAsync(async () => {
+    const bookings = await api.getBookings(token!);
+    return bookings.find((b) => b.status === 'completed' && b.payment_status === 'paid' && !b.has_review) ?? null;
+  }, [token]);
+
+  const submit = async () => {
+    if (!data || stars < 1) return;
+    setBusy(true);
+    try {
+      await api.reviewBooking(token!, data.id, {
+        rating: stars,
+        cleanliness_rating: cats.cleanliness_rating,
+        staff_rating: cats.staff_rating,
+        value_rating: cats.value_rating,
+        wait_time_rating: cats.wait_time_rating,
+        comment: comment.trim() || undefined,
+      });
+      toast('Review submitted · Verified');
+      nav.goBack();
+    } catch (e) {
+      const err = e as ApiError;
+      toast(err.message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -33,55 +66,67 @@ export default function RatingScreen() {
         <Text style={styles.headerTitle}>Rate your wash</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 28 }}>
-        <Card style={styles.summary}>
-          <Text style={styles.pkg}>{lastWash.pkg}</Text>
-          <Text style={styles.partner}>{lastWash.partner}</Text>
-          <View style={styles.verified}>
-            <Feather name="check" size={11} color={colors.good} />
-            <Text style={styles.verifiedText}>Verified — paid wash completed</Text>
-          </View>
-          <View style={styles.bigStars}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <Pressable key={n} onPress={() => setStars(n)}>
-                <Star size={38} filled={stars >= n} />
-              </Pressable>
-            ))}
-          </View>
-          <Text style={styles.tapHint}>Tap to rate your overall experience</Text>
-        </Card>
-
-        <Text style={styles.h3}>Rate the details</Text>
-        <Card style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
-          {ratingCats.map((c, i) => (
-            <View key={c} style={[styles.catRow, i === ratingCats.length - 1 && { borderBottomWidth: 0 }]}>
-              <Text style={styles.catName}>{c}</Text>
-              <View style={{ flexDirection: 'row', gap: 5 }}>
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <Pressable key={n} onPress={() => setCats((s) => ({ ...s, [c]: n }))}>
-                    <Star size={20} filled={(cats[c] || 0) >= n} />
-                  </Pressable>
-                ))}
-              </View>
+      {loading ? (
+        <Loading />
+      ) : error ? (
+        <ErrorState message={error} onRetry={reload} />
+      ) : !data ? (
+        <View style={{ padding: 20 }}>
+          <Card style={{ padding: 24 }}>
+            <EmptyState title="Nothing to review yet" sub="Once a wash is completed and paid, you can leave a verified review here." />
+          </Card>
+        </View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 28 }}>
+          <Card style={styles.summary}>
+            <Text style={styles.pkg}>{data.service?.name ?? 'Wash'}</Text>
+            <Text style={styles.partner}>{data.tenant?.name ?? ''}</Text>
+            <View style={styles.verified}>
+              <Feather name="check" size={11} color={colors.good} />
+              <Text style={styles.verifiedText}>Verified — paid wash completed</Text>
             </View>
-          ))}
-        </Card>
+            <View style={styles.bigStars}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Pressable key={n} onPress={() => setStars(n)}>
+                  <Star size={38} filled={stars >= n} />
+                </Pressable>
+              ))}
+            </View>
+            <Text style={styles.tapHint}>Tap to rate your overall experience</Text>
+          </Card>
 
-        <Text style={styles.h3}>Add a review <Text style={styles.optional}>(optional)</Text></Text>
-        <TextInput
-          value={review}
-          onChangeText={setReview}
-          placeholder="Share what stood out about your wash…"
-          placeholderTextColor={colors.inkMute}
-          multiline
-          style={styles.textarea}
-        />
+          <Text style={styles.h3}>Rate the details</Text>
+          <Card style={{ paddingHorizontal: 16, paddingVertical: 4 }}>
+            {CATS.map((c, i) => (
+              <View key={c.key} style={[styles.catRow, i === CATS.length - 1 && { borderBottomWidth: 0 }]}>
+                <Text style={styles.catName}>{c.label}</Text>
+                <View style={{ flexDirection: 'row', gap: 5 }}>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Pressable key={n} onPress={() => setCats((s) => ({ ...s, [c.key]: n }))}>
+                      <Star size={20} filled={(cats[c.key] || 0) >= n} />
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            ))}
+          </Card>
 
-        <Pressable style={[styles.submitBtn, canSubmit ? styles.submitOn : styles.submitOff]} onPress={submit}>
-          <Text style={styles.submitText}>Submit review</Text>
-        </Pressable>
-        <Text style={styles.footnote}>Only customers who completed a paid wash can review.</Text>
-      </ScrollView>
+          <Text style={styles.h3}>Add a review <Text style={styles.optional}>(optional)</Text></Text>
+          <TextInput
+            value={comment}
+            onChangeText={setComment}
+            placeholder="Share what stood out about your wash…"
+            placeholderTextColor={colors.inkMute}
+            multiline
+            style={styles.textarea}
+          />
+
+          <Pressable style={[styles.submitBtn, stars > 0 ? styles.submitOn : styles.submitOff]} onPress={submit} disabled={stars < 1 || busy}>
+            {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitText}>Submit review</Text>}
+          </Pressable>
+          <Text style={styles.footnote}>Only customers who completed a paid wash can review.</Text>
+        </ScrollView>
+      )}
     </View>
   );
 }

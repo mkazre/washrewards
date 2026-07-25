@@ -43,19 +43,23 @@ export default function ConfirmationScreen() {
           </View>
           <Line label="Partner" value={p.partnerName} />
           <Line label="Vehicle" value={p.vehicleName} />
-          <Line label="Package" value={p.pkgName} />
-          <Line label="Today at" value={p.slot} />
+          <Line label="Package" value={p.serviceName} />
+          <Line label="When" value={p.scheduledLabel} />
           <Line label="Paid via" value={p.payLabel} />
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Amount paid</Text>
-            <Text style={styles.totalValue}>{p.pkgPrice}</Text>
+            <Text style={styles.totalValue}>{p.amount}</Text>
           </View>
         </Card>
 
         <View style={styles.washNote}>
           <View style={styles.rCoin}><Text style={styles.rCoinText}>R</Text></View>
           <Text style={styles.washNoteText}>
-            <Text style={{ fontFamily: font.display }}>Wash {p.washNext} of 5 complete.</Text> Reach 5 paid washes to earn your next R100 voucher.
+            {p.voucherEarned ? (
+              <><Text style={{ fontFamily: font.display }}>You earned a voucher! 🎉</Text> It's ready to redeem in your Rewards wallet.</>
+            ) : (
+              <><Text style={{ fontFamily: font.display }}>Wash {p.washCount} of {p.threshold} complete.</Text> Reach {p.threshold} paid washes to earn your next voucher.</>
+            )}
           </Text>
         </View>
 
