@@ -50,17 +50,14 @@ class TenantForm
                             ->columnSpanFull(),
                         FileUpload::make('logo_path')
                             ->image()
-                            ->directory('tenants/logos')
-                            // The media bucket blocks public ACLs (S3 Block Public
-                            // Access) and is served through CloudFront's Origin
-                            // Access Control instead — uploading with the
-                            // default 'public' visibility asks S3 for a
-                            // public-read ACL, which the bucket rejects outright.
-                            ->visibility('private'),
+                            // Deliberately no ->visibility() — the bucket has ACLs
+                            // disabled entirely (Bucket owner enforced), so setting
+                            // any visibility (even 'private') re-adds an ACL param
+                            // that S3 rejects. See config/filesystems.php's s3 disk.
+                            ->directory('tenants/logos'),
                         FileUpload::make('cover_photo_path')
                             ->image()
-                            ->directory('tenants/covers')
-                            ->visibility('private'),
+                            ->directory('tenants/covers'),
                     ]),
 
                 Section::make('Commission')

@@ -56,20 +56,17 @@ class PlatformSettingForm
                             ->label('Logo')
                             ->image()
                             ->imageEditor()
+                            // Deliberately no ->visibility() — the bucket has ACLs
+                            // disabled entirely (Bucket owner enforced), so setting
+                            // any visibility (even 'private') re-adds an ACL param
+                            // that S3 rejects. See config/filesystems.php's s3 disk.
                             ->directory('platform/branding')
-                            // The media bucket blocks public ACLs (S3 Block Public
-                            // Access) and is served through CloudFront's Origin
-                            // Access Control instead — the default 'public'
-                            // visibility asks S3 for a public-read ACL, which the
-                            // bucket rejects outright and throws on save.
-                            ->visibility('private')
                             ->maxSize(2048)
                             ->helperText('Shown in the sidebar and on the login page. PNG or SVG on a transparent background works best.'),
                         FileUpload::make('favicon_path')
                             ->label('Favicon')
                             ->acceptedFileTypes(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon', 'image/svg+xml'])
                             ->directory('platform/branding')
-                            ->visibility('private')
                             ->maxSize(512)
                             ->helperText('The little icon in the browser tab. A square PNG (32×32 or 64×64) or .ico.'),
                     ]),
@@ -83,7 +80,6 @@ class PlatformSettingForm
                             ->image()
                             ->imageEditor()
                             ->directory('platform/branding')
-                            ->visibility('private')
                             ->maxSize(6144)
                             ->columnSpanFull()
                             ->helperText('A wide, high-resolution image looks best (e.g. 1920×1080).'),

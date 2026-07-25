@@ -56,12 +56,16 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-            // The media bucket has S3 Block Public Access fully enabled and is
-            // served through CloudFront (Origin Access Control) instead — any
-            // write that asks S3 for a public-read ACL is rejected outright.
-            // 'private' here is a safety net; every FileUpload field should
-            // also set ->visibility('private') explicitly.
-            'visibility' => 'private',
+            // The bucket uses S3's modern default Object Ownership
+            // ("Bucket owner enforced"), which disables ACLs entirely — a
+            // PutObject that includes *any* ACL (even 'private') is rejected
+            // with AccessControlListNotSupported. Access is controlled by the
+            // bucket policy (CloudFront OAC) instead, so every write must omit
+            // the ACL parameter altogether — hence the empty string here
+            // rather than a 'visibility' setting, which would reintroduce one.
+            'options' => [
+                'ACL' => '',
+            ],
             'throw' => false,
             'report' => false,
         ],
