@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Auth\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -11,6 +12,45 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
+    public function __construct(private readonly OtpService $otp) {}
+
+    /**
+     * Primary mobile-app login: send a 4-digit SMS code to the given phone
+     * number. Works for both new and returning customers — verifyOtp() below
+     * finds-or-creates the User, so there's no separate "sign up" step.
+     */
+    public function requestOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => ['required', 'string', 'max:32'],
+        ]);
+
+        $this->otp->request($validated['phone']);
+
+        return response()->json(['message' => 'A verification code has been sent.']);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $validated = $request->validate([
+            'phone' => ['required', 'string', 'max:32'],
+            'code' => ['required', 'string'],
+        ]);
+
+        $result = $this->otp->verify($validated['phone'], $validated['code']);
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['message']], 422);
+        }
+
+        $user = $this->otp->findOrCreateUser($validated['phone']);
+
+        return response()->json([
+            'user' => $user,
+            'token' => $user->createToken('mobile')->plainTextToken,
+        ]);
+    }
+
     public function register(Request $request)
     {
         $validated = $request->validate([
