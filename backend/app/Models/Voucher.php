@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Voucher extends Model
 {
@@ -13,14 +14,23 @@ class Voucher extends Model
     protected $fillable = [
         'user_id',
         'code',
+        'qr_token',
         'amount',
         'status',
         'source',
         'redeemed_booking_id',
+        'earned_booking_id',
         'earned_at',
         'expires_at',
         'redeemed_at',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Voucher $voucher) {
+            $voucher->qr_token ??= Str::random(40);
+        });
+    }
 
     protected function casts(): array
     {
@@ -40,5 +50,10 @@ class Voucher extends Model
     public function redeemedBooking(): BelongsTo
     {
         return $this->belongsTo(Booking::class, 'redeemed_booking_id');
+    }
+
+    public function earnedBooking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class, 'earned_booking_id');
     }
 }

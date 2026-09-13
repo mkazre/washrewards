@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             PlatformSettingsSeeder::class,
+            LoyaltyTiersSeeder::class,
             TenantSeeder::class,
             UserSeeder::class,
             BookingSeeder::class,

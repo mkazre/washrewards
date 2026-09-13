@@ -12,6 +12,9 @@ class VoucherResource extends JsonResource
         return [
             'id' => $this->id,
             'code' => $this->code,
+            // What the wallet screen encodes as a QR for a partner to scan
+            // and redeem via POST /partner/vouchers/redeem.
+            'qr_token' => $this->qr_token,
             'amount' => (float) $this->amount,
             'status' => $this->status,
             'source' => $this->source,
