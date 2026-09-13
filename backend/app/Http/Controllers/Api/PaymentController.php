@@ -6,26 +6,24 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\VoucherResource;
 use App\Models\Booking;
-use App\Models\Transaction;
+use App\Models\PlatformSetting;
 use App\Payments\Contracts\PaymentGateway;
-use App\Services\Loyalty\LoyaltyService;
-use App\Services\Payments\CommissionSplitCalculator;
+use App\Services\Payments\FinalizeBookingPayment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
     public function __construct(
         private readonly PaymentGateway $gateway,
-        private readonly CommissionSplitCalculator $calculator,
-        private readonly LoyaltyService $loyalty,
+        private readonly FinalizeBookingPayment $finalize,
     ) {}
 
     /**
-     * Confirms payment for a booking: charges via the configured gateway,
-     * records the ledger split, and checks whether this payment just earned
-     * a loyalty voucher. See App\Payments\Contracts\PaymentGateway for why
-     * this defaults to a sandbox charge rather than a real one.
+     * Confirms payment for a booking. Synchronous gateways (sandbox, and any
+     * card-token driver) finalize immediately here; redirect/async gateways
+     * (PayFast/Paystack/Ozow hosted checkout) instead finalize from their
+     * webhook controller once the gateway confirms success — see
+     * App\Services\Payments\FinalizeBookingPayment, shared by both paths.
      */
     public function pay(Request $request, Booking $booking)
     {
@@ -47,35 +45,18 @@ class PaymentController extends Controller
             return response()->json(['message' => $result->failureReason ?? 'Payment failed.'], 422);
         }
 
-        $split = $this->calculator->calculate($booking);
-        $voucher = null;
+        // Hosted-checkout gateways return a redirect URL rather than an
+        // immediate success — the booking stays pending until their webhook
+        // confirms it (see e.g. Api\Webhooks\PayFastWebhookController).
+        if ($result->redirectUrl) {
+            return response()->json(['redirect_url' => $result->redirectUrl]);
+        }
 
-        DB::transaction(function () use ($booking, $result, $split, &$voucher) {
-            $booking->update([
-                'payment_status' => 'paid',
-                'status' => $booking->status === 'pending' ? 'confirmed' : $booking->status,
-                'counts_toward_voucher' => true,
-            ]);
-
-            Transaction::create([
-                'tenant_id' => $booking->tenant_id,
-                'booking_id' => $booking->id,
-                'user_id' => $booking->user_id,
-                'gross_amount' => $split->grossAmount,
-                'platform_commission' => $split->platformCommission,
-                'voucher_contribution' => $split->voucherContribution,
-                'partner_earnings' => $split->partnerEarnings,
-                'gateway' => config('payments.default'),
-                'gateway_reference' => $result->reference,
-                'status' => 'completed',
-            ]);
-
-            $voucher = $this->loyalty->checkAndIssueVoucher($booking->user);
-        });
+        $outcome = $this->finalize->handle($booking, PlatformSetting::effectivePaymentGateway(), $result->reference);
 
         return response()->json([
-            'booking' => new BookingResource($booking->fresh(['tenant', 'service', 'vehicle'])),
-            'voucher_earned' => $voucher ? new VoucherResource($voucher) : null,
+            'booking' => new BookingResource($outcome['booking']->load(['tenant', 'service', 'vehicle'])),
+            'voucher_earned' => $outcome['voucher'] ? new VoucherResource($outcome['voucher']) : null,
         ]);
     }
 }

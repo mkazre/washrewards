@@ -14,6 +14,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement(
             "ALTER TABLE transactions MODIFY gateway ENUM('payfast', 'peach_payments', 'paystack', 'yoco', 'ozow', 'sandbox') NOT NULL"
         );

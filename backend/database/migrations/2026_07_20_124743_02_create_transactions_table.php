@@ -22,7 +22,12 @@ return new class extends Migration
             $table->decimal('partner_earnings', 8, 2)
                 ->comment('gross_amount - platform_commission (includes travel fee for mobile wash)');
 
-            $table->enum('gateway', ['payfast', 'peach_payments', 'paystack', 'yoco', 'ozow']);
+            // 'sandbox' is also allowed here (not just via the later widen
+            // migration) so a from-scratch install — including SQLite, which
+            // bakes enum() into an immutable CHECK constraint at CREATE TABLE
+            // time — ends up with the same final allowed set as production
+            // without needing SQLite-specific ALTER support.
+            $table->enum('gateway', ['payfast', 'peach_payments', 'paystack', 'yoco', 'ozow', 'sandbox']);
             $table->string('gateway_reference')->nullable()
                 ->comment('External payment reference only — never raw card data (PCI-DSS SAQ-A)');
             $table->enum('status', ['pending', 'completed', 'failed', 'refunded'])->default('pending');

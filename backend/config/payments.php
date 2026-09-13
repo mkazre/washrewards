@@ -1,5 +1,8 @@
 <?php
 
+use App\Payments\Drivers\OzowGateway;
+use App\Payments\Drivers\PayFastGateway;
+use App\Payments\Drivers\PaystackGateway;
 use App\Payments\Drivers\SandboxGateway;
 
 return [
@@ -10,10 +13,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | Which App\Payments\Contracts\PaymentGateway driver handles booking
-    | payments. Defaults to the sandbox driver — swap in a real SA gateway
-    | (PayFast / Peach Payments / Paystack / Yoco / Ozow) once one is chosen
-    | and its API keys are available, by adding a driver class below and
-    | setting PAYMENT_GATEWAY in .env.
+    | payments. The runtime choice normally comes from PlatformSetting::
+    | effectivePaymentGateway() (see the admin Settings page's "Integrations
+    | & payments" section) — this env value is only the fallback used before
+    | that setting exists (e.g. very first boot / artisan commands run
+    | outside a request).
     |
     */
 
@@ -21,6 +25,9 @@ return [
 
     'drivers' => [
         'sandbox' => SandboxGateway::class,
+        'payfast' => PayFastGateway::class,
+        'paystack' => PaystackGateway::class,
+        'ozow' => OzowGateway::class,
     ],
 
 ];
