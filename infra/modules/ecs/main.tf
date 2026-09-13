@@ -92,6 +92,16 @@ data "aws_iam_policy_document" "task_permissions" {
     actions   = ["s3:ListBucket"]
     resources = [var.s3_media_bucket_arn]
   }
+  # OTP delivery (App\Sms\Drivers\SnsSmsSender) once "AWS SNS" is selected in
+  # the admin Settings page. Direct-to-phone-number Publish needs no SNS
+  # topic resource, just this permission — resources = ["*"] is SNS's own
+  # documented requirement for that call shape (there's no topic ARN to
+  # scope to when publishing straight to a PhoneNumber).
+  statement {
+    effect    = "Allow"
+    actions   = ["sns:Publish"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "task_permissions" {

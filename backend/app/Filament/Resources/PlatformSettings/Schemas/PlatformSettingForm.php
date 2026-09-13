@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PlatformSettings\Schemas;
 
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -46,6 +47,44 @@ class PlatformSettingForm
                             ->numeric()
                             ->suffix('days')
                             ->default(90),
+                    ]),
+
+                Section::make('Integrations & payments')
+                    ->description('Real credentials for SMS delivery and payment gateways. Everything here is optional — WashRewards keeps using the built-in sandbox (which logs OTPs and auto-approves payments) for anything left blank, so it\'s safe to fill these in gradually.')
+                    ->columns(2)
+                    ->components([
+                        Select::make('sms_driver')
+                            ->label('OTP delivery')
+                            ->options(['sandbox' => 'Sandbox (logs the code, does not send SMS)', 'sns' => 'AWS SNS (real SMS)'])
+                            ->default('sandbox')
+                            ->required()
+                            ->helperText('AWS SNS uses the AWS credentials already configured for file storage — no extra keys needed here, just switch this on once those exist.')
+                            ->columnSpanFull(),
+
+                        Select::make('payment_gateway_default')
+                            ->label('Active payment gateway')
+                            ->options([
+                                'sandbox' => 'Sandbox (auto-approves every payment)',
+                                'payfast' => 'PayFast',
+                                'paystack' => 'Paystack',
+                                'ozow' => 'Ozow',
+                            ])
+                            ->default('sandbox')
+                            ->required()
+                            ->helperText('If the selected gateway is missing required keys below, WashRewards automatically keeps using the sandbox gateway instead of failing bookings.')
+                            ->columnSpanFull(),
+
+                        TextInput::make('payfast_merchant_id')->label('PayFast merchant ID')->password()->revealable(),
+                        TextInput::make('payfast_merchant_key')->label('PayFast merchant key')->password()->revealable(),
+                        TextInput::make('payfast_passphrase')->label('PayFast passphrase')->password()->revealable()
+                            ->helperText('Optional — only if your PayFast account has a passphrase set.'),
+
+                        TextInput::make('paystack_public_key')->label('Paystack public key')->password()->revealable(),
+                        TextInput::make('paystack_secret_key')->label('Paystack secret key')->password()->revealable(),
+
+                        TextInput::make('ozow_site_code')->label('Ozow site code')->password()->revealable(),
+                        TextInput::make('ozow_api_key')->label('Ozow API key')->password()->revealable(),
+                        TextInput::make('ozow_private_key')->label('Ozow private key')->password()->revealable(),
                     ]),
 
                 Section::make('Admin branding')
