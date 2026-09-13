@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => \App\Http\Middleware\ResolveTenant::class,
             'partner' => \App\Http\Middleware\EnsurePartnerAccess::class,
+            'platform.owner' => \App\Http\Middleware\EnsurePlatformOwnerAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
