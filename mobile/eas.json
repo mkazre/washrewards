@@ -20,7 +20,7 @@
         "simulator": true
       },
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://api.washrewards.co.za/v1"
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.washrewards.online/api"
       }
     },
     "production": {

@@ -9,7 +9,7 @@ import Constants from "expo-constants";
 export const API_BASE_URL: string =
   (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ||
   process.env.EXPO_PUBLIC_API_BASE_URL ||
-  "https://api.washrewards.co.za/v1";
+  "https://api.washrewards.online/api";
 
 export class ApiError extends Error {
   status: number;

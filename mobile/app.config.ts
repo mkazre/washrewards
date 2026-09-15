@@ -30,11 +30,12 @@ const config: ExpoConfig = {
     bundler: "metro",
   },
   plugins: ["expo-router", "expo-secure-store"],
+  owner: "mkazre",
   extra: {
     apiBaseUrl:
-      process.env.EXPO_PUBLIC_API_BASE_URL || "https://api.washrewards.co.za/v1",
+      process.env.EXPO_PUBLIC_API_BASE_URL || "https://api.washrewards.online/api",
     eas: {
-      projectId: "00000000-0000-0000-0000-000000000000",
+      projectId: "6477705b-1e69-489f-a80f-4aa5e84ae74d",
     },
   },
 };
