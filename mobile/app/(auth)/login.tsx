@@ -9,15 +9,14 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { Car } from "lucide-react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as AuthSession from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import * as AppleAuthentication from "expo-apple-authentication";
 import * as WebBrowser from "expo-web-browser";
-import { colors, fonts, gradients, radii } from "@/lib/theme";
+import { colors, fonts, radii } from "@/lib/theme";
 import { PillButton } from "@/components/PillButton";
 import { api, ApiError } from "@/lib/api";
 import { useAppState } from "@/lib/AppState";
@@ -152,9 +151,9 @@ export default function LoginScreen() {
         ]}
         keyboardShouldPersistTaps="handled"
       >
-        <LinearGradient colors={gradients.blueButton} style={styles.logo}>
-          <Car size={30} color={colors.white} strokeWidth={1.7} />
-        </LinearGradient>
+        <View style={styles.wordmarkWrap}>
+          <Image source={require("@/assets/logo-wordmark.png")} style={styles.wordmark} contentFit="contain" />
+        </View>
 
         <Text style={styles.title}>Welcome</Text>
         <Text style={styles.subtitle}>
@@ -244,13 +243,14 @@ const styles = StyleSheet.create({
     paddingTop: 22,
     paddingBottom: 30,
   },
-  logo: {
-    width: 54,
-    height: 54,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
+  wordmarkWrap: {
+    backgroundColor: colors.navy,
+    borderRadius: radii.lg,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    alignSelf: "flex-start",
   },
+  wordmark: { width: 190, height: 55 },
   title: {
     marginTop: 20,
     fontFamily: fonts.heading,

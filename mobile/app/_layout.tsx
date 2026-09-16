@@ -16,6 +16,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppStateProvider } from "@/lib/AppState";
 import { NotificationTapHandler } from "@/components/NotificationTapHandler";
+import { NoInternetOverlay } from "@/components/NoInternetOverlay";
 import "@/lib/push";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -81,6 +82,7 @@ export default function RootLayout() {
             options={{ presentation: "modal", animation: "slide_from_bottom" }}
           />
         </Stack>
+        <NoInternetOverlay />
       </AppStateProvider>
     </SafeAreaProvider>
   );

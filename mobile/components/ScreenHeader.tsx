@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts } from "@/lib/theme";
+import { AppLogo } from "@/components/AppLogo";
 
 interface Props {
   title: string;
@@ -24,6 +25,7 @@ export function ScreenHeader({ title, onBack, right }: Props) {
       >
         <ChevronLeft size={20} color={colors.white} strokeWidth={2.2} />
       </Pressable>
+      <AppLogo size={26} />
       <Text style={styles.title}>{title}</Text>
       {right ?? <View style={{ width: 38 }} />}
     </View>

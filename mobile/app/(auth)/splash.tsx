@@ -1,44 +1,126 @@
-import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import React, { useRef, useState } from "react";
+import {
+  Dimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { Car } from "lucide-react-native";
-import { colors, fonts, gradients } from "@/lib/theme";
+import { MapPin, CalendarCheck, Gift, BellRing } from "lucide-react-native";
+import { colors, fonts, gradients, radii } from "@/lib/theme";
 import { PillButton } from "@/components/PillButton";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+const SLIDES = [
+  {
+    icon: MapPin,
+    title: "Find washes near you",
+    body: "Discover trusted car washes and mobile valets around you, sorted by real distance — list or map view.",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Book in seconds",
+    body: "Pick a package, choose a time, and pay securely by card or instant EFT — no calls, no waiting around.",
+  },
+  {
+    icon: Gift,
+    title: "Earn real rewards",
+    body: "Every paid wash counts toward free vouchers and loyalty tiers, redeemable at any partner in the network.",
+  },
+  {
+    icon: BellRing,
+    title: "Stay in the loop",
+    body: "Get instant updates the moment your wash is booked, in progress, or done — right on your lock screen.",
+  },
+];
 
 export default function SplashScreenView() {
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
+  const [index, setIndex] = useState(0);
+
+  const isLast = index === SLIDES.length - 1;
+
+  function goToLogin() {
+    router.push("/(auth)/login");
+  }
+
+  function next() {
+    if (isLast) {
+      goToLogin();
+      return;
+    }
+    scrollRef.current?.scrollTo({ x: (index + 1) * SCREEN_WIDTH, animated: true });
+  }
+
+  function onMomentumScrollEnd(e: NativeSyntheticEvent<NativeScrollEvent>) {
+    const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    setIndex(page);
+  }
 
   return (
     <LinearGradient colors={gradients.splash} style={styles.wrap}>
       <View style={[styles.glow, styles.glowTop]} />
       <View style={[styles.glow, styles.glowBottom]} />
 
-      <LinearGradient colors={gradients.blueButton} style={styles.logo}>
-        <Car size={44} color={colors.white} strokeWidth={1.7} />
-      </LinearGradient>
+      <Pressable style={styles.skipBtn} onPress={goToLogin} hitSlop={10}>
+        <Text style={styles.skipText}>Skip</Text>
+      </Pressable>
 
-      <Text style={styles.title}>WashRewards</Text>
-      <Text style={styles.subtitle}>SOUTH AFRICA</Text>
-      <Text style={styles.tagline}>
-        A premium wash at your doorstep — book, track and earn rewards,
-        anywhere in Gauteng.
-      </Text>
+      <View style={styles.wordmarkWrap}>
+        <Image
+          source={require("@/assets/logo-wordmark.png")}
+          style={styles.wordmark}
+          contentFit="contain"
+        />
+      </View>
 
-      <View style={{ width: "100%", marginTop: 36 }}>
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={onMomentumScrollEnd}
+        style={styles.pager}
+      >
+        {SLIDES.map((slide, i) => {
+          const Icon = slide.icon;
+          return (
+            <View key={i} style={[styles.slide, { width: SCREEN_WIDTH - 68 }]}>
+              <View style={styles.iconWrap}>
+                <Icon size={34} color={colors.gold} strokeWidth={1.7} />
+              </View>
+              <Text style={styles.slideTitle}>{slide.title}</Text>
+              <Text style={styles.slideBody}>{slide.body}</Text>
+            </View>
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.dotsRow}>
+        {SLIDES.map((_, i) => (
+          <View key={i} style={[styles.dot, i === index && styles.dotActive]} />
+        ))}
+      </View>
+
+      <View style={{ width: "100%", marginTop: 28 }}>
         <PillButton
-          label="Get started"
+          label={isLast ? "Get started" : "Next"}
           variant="primary"
-          onPress={() => router.push("/(auth)/login")}
+          onPress={next}
         />
       </View>
 
       <Text style={styles.footer}>
         Already have an account?{" "}
-        <Text
-          style={styles.footerLink}
-          onPress={() => router.push("/(auth)/login")}
-        >
+        <Text style={styles.footerLink} onPress={goToLogin}>
           Sign in
         </Text>
       </Text>
@@ -68,34 +150,47 @@ const styles = StyleSheet.create({
     left: -60,
     backgroundColor: "rgba(36,99,235,0.2)",
   },
-  logo: {
-    width: 88,
-    height: 88,
-    borderRadius: 26,
+  skipBtn: { position: "absolute", top: 54, right: 26 },
+  skipText: { color: colors.mutedBlueGrey, fontSize: 13.5, fontFamily: fonts.headingSemi },
+  wordmarkWrap: {
+    backgroundColor: colors.navy,
+    borderRadius: radii.lg,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+  },
+  wordmark: { width: 176, height: 51 },
+  pager: { marginTop: 30, flexGrow: 0 },
+  slide: { alignItems: "center", paddingHorizontal: 8 },
+  iconWrap: {
+    width: 76,
+    height: 76,
+    borderRadius: 24,
+    backgroundColor: "rgba(245,158,11,0.14)",
     alignItems: "center",
     justifyContent: "center",
   },
-  title: {
-    marginTop: 26,
+  slideTitle: {
+    marginTop: 22,
     fontFamily: fonts.heading,
-    fontSize: 32,
+    fontSize: 22,
     color: colors.white,
-  },
-  subtitle: {
-    color: colors.gold,
-    fontFamily: fonts.headingSemi,
-    fontSize: 14,
-    letterSpacing: 2,
-    marginTop: 8,
-  },
-  tagline: {
-    color: colors.mutedBlueGrey,
-    fontSize: 15,
-    lineHeight: 23,
-    marginTop: 20,
-    maxWidth: 270,
     textAlign: "center",
   },
+  slideBody: {
+    marginTop: 12,
+    color: colors.mutedBlueGrey,
+    fontSize: 14.5,
+    lineHeight: 22,
+    textAlign: "center",
+  },
+  dotsRow: { flexDirection: "row", gap: 8, marginTop: 26 },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  dotActive: { width: 20, backgroundColor: colors.gold },
   footer: {
     color: colors.mutedBlueGrey2,
     fontSize: 13,

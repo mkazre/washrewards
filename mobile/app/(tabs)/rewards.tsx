@@ -18,6 +18,7 @@ import { api, ApiError, Booking, WalletVoucher } from "@/lib/api";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
 import { VoucherCard } from "@/components/VoucherCard";
+import { AppLogo } from "@/components/AppLogo";
 
 export default function RewardsScreen() {
   const insets = useSafeAreaInsets();
@@ -95,7 +96,10 @@ export default function RewardsScreen() {
       >
         <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <View style={styles.headerRow}>
-            <Text style={styles.headerTitle}>Rewards</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <AppLogo size={28} />
+              <Text style={styles.headerTitle}>Rewards</Text>
+            </View>
             <LinearGradient colors={gradients.goldButton} style={styles.levelPill}>
               <Text style={styles.levelPillText}>
                 {loyalty?.tier?.name ?? "BRONZE"} · LEVEL {loyalty?.tier?.level ?? 1}

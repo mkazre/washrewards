@@ -19,6 +19,7 @@ import { getDeviceLocation } from "@/lib/location";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
 import { NearbyMap } from "@/components/NearbyMap";
+import { AppLogo } from "@/components/AppLogo";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -118,10 +119,13 @@ export default function HomeScreen() {
               <Text style={styles.userName}>{user?.name ?? "Guest"}</Text>
             </View>
           </View>
-          <Pressable onPress={() => router.push("/notifications")} style={styles.bellBtn}>
-            <Bell size={21} color={colors.white} strokeWidth={1.7} />
-            <View style={styles.bellDot} />
-          </Pressable>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <AppLogo size={30} />
+            <Pressable onPress={() => router.push("/notifications")} style={styles.bellBtn}>
+              <Bell size={21} color={colors.white} strokeWidth={1.7} />
+              <View style={styles.bellDot} />
+            </Pressable>
+          </View>
         </View>
 
         {vehicle ? (

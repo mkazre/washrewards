@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, radii } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { PillButton } from "@/components/PillButton";
+import { AppLogo } from "@/components/AppLogo";
 
 export default function ConfirmationScreen() {
   const router = useRouter();
@@ -40,7 +41,8 @@ export default function ConfirmationScreen() {
         { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 28 },
       ]}
     >
-      <View style={styles.checkOuter}>
+      <AppLogo size={40} />
+      <View style={[styles.checkOuter, { marginTop: 18 }]}>
         <View style={styles.checkRing} />
         <View style={styles.checkCircle}>
           <Check size={44} color={colors.blue} strokeWidth={2.6} />

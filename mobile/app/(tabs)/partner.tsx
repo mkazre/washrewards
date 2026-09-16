@@ -25,6 +25,7 @@ import { api, ApiError, Booking } from "@/lib/api";
 import { StatChip } from "@/components/StatChip";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
+import { AppLogo } from "@/components/AppLogo";
 
 export default function PartnerScreen() {
   const router = useRouter();
@@ -118,8 +119,11 @@ export default function PartnerScreen() {
               <Text style={styles.tenantSub}>{tenantArea ? `${tenantArea} · Partner` : "Partner"}</Text>
             </View>
           </View>
-          <View style={styles.businessTag}>
-            <Text style={styles.businessTagText}>BUSINESS</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <AppLogo size={28} />
+            <View style={styles.businessTag}>
+              <Text style={styles.businessTagText}>BUSINESS</Text>
+            </View>
           </View>
         </View>
       </View>

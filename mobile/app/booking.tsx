@@ -16,6 +16,7 @@ import { colors, fonts, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError, Service, Vehicle } from "@/lib/api";
 import { getDeviceLocation } from "@/lib/location";
+import { AppLogo } from "@/components/AppLogo";
 import { PillButton } from "@/components/PillButton";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
@@ -181,6 +182,9 @@ export default function BookingScreen() {
           >
             <X size={20} color={colors.white} strokeWidth={2} />
           </Pressable>
+          <View style={[styles.heroLogo, { top: insets.top + 16 }]}>
+            <AppLogo size={36} />
+          </View>
         </View>
 
         <View style={styles.body}>
@@ -373,6 +377,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(9,24,48,0.55)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  heroLogo: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    ...shadow.card,
   },
   openTag: {
     position: "absolute",

@@ -16,6 +16,7 @@ import { api, ApiError } from "@/lib/api";
 import { StatChip } from "@/components/StatChip";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
+import { AppLogo } from "@/components/AppLogo";
 
 const COMMISSION_RATE = 0.3;
 const RUNNING_COST_RATE = 0.35;
@@ -89,9 +90,12 @@ export default function PlatformScreen() {
     >
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.headerTitle}>Platform</Text>
-            <Text style={styles.headerSub}>WashRewards SA · Owner console</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <AppLogo size={30} />
+            <View>
+              <Text style={styles.headerTitle}>Platform</Text>
+              <Text style={styles.headerSub}>WashRewards SA · Owner console</Text>
+            </View>
           </View>
           <View style={styles.ownerTag}>
             <Text style={styles.ownerTagText}>OWNER</Text>

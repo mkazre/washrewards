@@ -8,10 +8,14 @@ const config: ExpoConfig = {
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "automatic",
+  // Matches the navy baked into assets/splash.png (the app favicon) exactly,
+  // so the letterboxed area around the icon is seamless — this is a couple
+  // of RGB units off from the design system's colors.navy (#091830) used
+  // everywhere else in the app, which is intentional here only.
   splash: {
     image: "./assets/splash.png",
     resizeMode: "contain",
-    backgroundColor: "#091830",
+    backgroundColor: "#05193B",
   },
   assetBundlePatterns: ["**/*"],
   ios: {
@@ -21,7 +25,7 @@ const config: ExpoConfig = {
   android: {
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
-      backgroundColor: "#091830",
+      backgroundColor: "#05193B",
     },
     package: "co.za.washrewards.app",
   },
@@ -38,7 +42,7 @@ const config: ExpoConfig = {
       "expo-notifications",
       {
         icon: "./assets/icon.png",
-        color: "#091830",
+        color: "#05193B",
       },
     ],
     "@maplibre/maplibre-react-native",

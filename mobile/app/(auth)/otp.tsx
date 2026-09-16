@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, radii } from "@/lib/theme";
 import { api, ApiError } from "@/lib/api";
 import { useAppState } from "@/lib/AppState";
+import { AppLogo } from "@/components/AppLogo";
 
 const CODE_LENGTH = 4;
 const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
@@ -78,9 +79,12 @@ export default function OtpScreen() {
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 16 }]}>
-      <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
-        <ChevronLeft size={20} color={colors.navyDeep} strokeWidth={2.2} />
-      </Pressable>
+      <View style={styles.topRow}>
+        <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
+          <ChevronLeft size={20} color={colors.navyDeep} strokeWidth={2.2} />
+        </Pressable>
+        <AppLogo size={32} />
+      </View>
 
       <Text style={styles.title}>Verify your number</Text>
       <Text style={styles.subtitle}>
@@ -149,6 +153,7 @@ export default function OtpScreen() {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.white, padding: 24, paddingTop: 14 },
+  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   backBtn: {
     width: 40,
     height: 40,
