@@ -44,10 +44,10 @@ export default function RatingScreen() {
     try {
       await api.bookings.review(token, bookingDraft.bookingId, {
         rating: overall,
-        cleanliness: catRatings.cleanliness ?? overall,
-        staff: catRatings.staff ?? overall,
-        value: catRatings.value ?? overall,
-        wait_time: catRatings.wait_time ?? overall,
+        cleanliness_rating: catRatings.cleanliness ?? overall,
+        staff_rating: catRatings.staff ?? overall,
+        value_rating: catRatings.value ?? overall,
+        wait_time_rating: catRatings.wait_time ?? overall,
         comment: comment.trim() || undefined,
       });
       setDone(true);

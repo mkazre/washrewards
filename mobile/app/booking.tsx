@@ -80,6 +80,8 @@ export default function BookingScreen() {
         vehicle_id: vehicle.id,
         service_id: selectedService.id,
         scheduled_at: scheduledAt.toISOString(),
+        // "wallet" isn't a real gateway yet — treat it as card for now.
+        payment_method: selectedPay === "eft" ? "eft" : "card",
       });
       const payLabel =
         PAY_METHODS.find((p) => p.id === selectedPay)?.label ?? "Card";
@@ -112,12 +114,6 @@ export default function BookingScreen() {
           <Pressable onPress={() => router.back()} style={styles.closeBtn}>
             <X size={20} color={colors.white} strokeWidth={2} />
           </Pressable>
-          {tenant.open_now ? (
-            <View style={styles.openTag}>
-              <View style={styles.openDot} />
-              <Text style={styles.openTagText}>Open now</Text>
-            </View>
-          ) : null}
         </View>
 
         <View style={styles.body}>
@@ -127,14 +123,14 @@ export default function BookingScreen() {
               <View style={styles.areaRow}>
                 <MapPin size={13} color={colors.placeholderText} strokeWidth={1.8} />
                 <Text style={styles.areaText}>
-                  {tenant.area ?? "—"}
+                  {tenant.suburb ?? tenant.city ?? "—"}
                   {tenant.distance_km ? ` · ${tenant.distance_km.toFixed(1)} km` : ""}
                 </Text>
               </View>
             </View>
             <View style={styles.ratingTag}>
               <Star size={13} color={colors.gold} fill={colors.gold} />
-              <Text style={styles.ratingTagText}>{tenant.rating ?? "—"}</Text>
+              <Text style={styles.ratingTagText}>{tenant.rating_avg?.toFixed(1) ?? "—"}</Text>
             </View>
           </View>
 
@@ -176,7 +172,7 @@ export default function BookingScreen() {
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                       <Text style={styles.pkgName}>{pk.name}</Text>
-                      {pk.popular ? (
+                      {pk.is_popular ? (
                         <View style={styles.popularTag}>
                           <Text style={styles.popularTagText}>POPULAR</Text>
                         </View>

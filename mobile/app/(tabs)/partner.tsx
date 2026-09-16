@@ -33,7 +33,7 @@ export default function PartnerScreen() {
 
   const hasTenant = !!user?.tenants?.length;
   const tenantName = user?.tenants?.[0]?.name ?? "Your business";
-  const tenantArea = user?.tenants?.[0]?.area ?? "";
+  const tenantArea = user?.tenants?.[0]?.suburb ?? user?.tenants?.[0]?.city ?? "";
 
   const load = useCallback(async () => {
     if (!token) {

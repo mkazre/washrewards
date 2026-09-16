@@ -84,6 +84,19 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   return json as T;
 }
 
+/**
+ * Laravel's default JsonResource/AnonymousResourceCollection behaviour wraps
+ * every resource response in {"data": ...} (plus {"links","meta"} when
+ * paginated) UNLESS the controller builds a plain array by hand — this
+ * backend does both inconsistently across endpoints, so each API method
+ * below picks request() or requestData() to match what its specific
+ * endpoint actually returns (see each controller for the ground truth).
+ */
+async function requestData<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+  const json = await request<{ data: T }>(path, opts);
+  return json.data;
+}
+
 // ---------- Domain types ----------
 
 export interface User {
@@ -98,16 +111,17 @@ export interface User {
 export interface Tenant {
   id: number | string;
   name: string;
-  area?: string;
+  type?: "fixed_garage" | "mobile_wash";
+  suburb?: string | null;
+  city?: string | null;
   address?: string;
-  rating?: number;
-  review_count?: number;
-  distance_km?: number;
-  price_from?: number;
-  lat?: number;
-  lng?: number;
-  photo_url?: string | null;
-  open_now?: boolean;
+  rating_avg?: number;
+  rating_count?: number;
+  from_price?: number | null;
+  distance_km?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  logo_url?: string | null;
   services?: Service[];
 }
 
@@ -126,34 +140,40 @@ export interface Service {
   description?: string;
   price: number;
   duration_minutes?: number;
-  popular?: boolean;
+  is_popular?: boolean;
 }
 
 export interface Booking {
   id: number | string;
-  tenant_id: number | string;
-  vehicle_id: number | string;
-  service_id: number | string;
+  receipt_no?: string;
   scheduled_at: string;
   status: string;
+  payment_status?: string;
   price?: number;
+  total_amount?: number;
   tenant?: Tenant;
   service?: Service;
+  vehicle?: Vehicle;
 }
 
+// Matches App\Http\Resources\VoucherResource exactly — the backend has no
+// "name"/"desc" concept, just a flat amount + where it came from.
 export interface WalletVoucher {
   id: number | string;
-  name: string;
-  desc: string;
-  value: string;
-  qr_token: string;
-  expiry: string;
+  code: string;
+  qr_token: string | null;
+  amount: number;
+  status: "active" | "redeemed" | "expired";
+  source: "loyalty" | "promotion" | "admin_grant";
+  earned_at: string;
+  expires_at: string | null;
+  redeemed_at: string | null;
 }
 
 export interface LevelRow {
-  n: number;
+  level: number;
   name: string;
-  reward: string;
+  reward_description: string;
   current?: boolean;
   achieved?: boolean;
 }
@@ -231,22 +251,24 @@ export const api = {
   },
 
   tenants: {
+    // GET /tenants is a paginated resource collection -> {data, links, meta}
     list: (token: string | null, lat?: number, lng?: number) =>
-      request<Tenant[]>("/tenants", { token, query: { lat, lng } }),
+      requestData<Tenant[]>("/tenants", { token, query: { lat, lng } }),
     get: (token: string | null, id: string | number) =>
-      request<Tenant>(`/tenants/${id}`, { token }),
+      requestData<Tenant>(`/tenants/${id}`, { token }),
   },
 
   vehicles: {
-    list: (token: string) => request<Vehicle[]>("/vehicles", { token }),
+    list: (token: string) => requestData<Vehicle[]>("/vehicles", { token }),
     create: (token: string, payload: Partial<Vehicle>) =>
-      request<Vehicle>("/vehicles", { method: "POST", token, body: payload }),
+      requestData<Vehicle>("/vehicles", { method: "POST", token, body: payload }),
   },
 
   bookings: {
-    list: (token: string) => request<Booking[]>("/bookings", { token }),
+    // GET /bookings is a paginated resource collection -> {data, links, meta}
+    list: (token: string) => requestData<Booking[]>("/bookings", { token }),
     get: (token: string, id: string | number) =>
-      request<Booking>(`/bookings/${id}`, { token }),
+      requestData<Booking>(`/bookings/${id}`, { token }),
     create: (
       token: string,
       payload: {
@@ -254,10 +276,17 @@ export const api = {
         vehicle_id: string | number;
         service_id: string | number;
         scheduled_at: string;
+        // Required by StoreBookingRequest — "wallet" isn't a real gateway
+        // yet (bookings.payment_method only allows card/eft), so the
+        // booking screen maps its wallet option to "card" for now.
+        payment_method: "card" | "eft";
+        service_address?: string;
       }
-    ) => request<Booking>("/bookings", { method: "POST", token, body: payload }),
+    ) => requestData<Booking>("/bookings", { method: "POST", token, body: payload }),
     cancel: (token: string, id: string | number) =>
-      request<Booking>(`/bookings/${id}/cancel`, { method: "POST", token }),
+      requestData<Booking>(`/bookings/${id}/cancel`, { method: "POST", token }),
+    // PaymentController::pay() builds its own plain {booking, voucher_earned}
+    // response (no Resource auto-wrap) -> use request(), not requestData().
     pay: (token: string, id: string | number, payload: { payload: unknown }) =>
       request<{ booking: Booking; voucher_earned?: WalletVoucher }>(
         `/bookings/${id}/pay`,
@@ -268,14 +297,15 @@ export const api = {
       id: string | number,
       payload: {
         rating: number;
-        cleanliness: number;
-        staff: number;
-        value: number;
-        wait_time: number;
+        cleanliness_rating?: number;
+        staff_rating?: number;
+        value_rating?: number;
+        wait_time_rating?: number;
         comment?: string;
       }
     ) =>
-      request<{ message: string }>(`/bookings/${id}/review`, {
+      // Response isn't used by callers today; typed loosely on purpose.
+      requestData<unknown>(`/bookings/${id}/review`, {
         method: "POST",
         token,
         body: payload,
@@ -283,24 +313,33 @@ export const api = {
   },
 
   loyalty: {
+    // Hand-built plain response (no Resource auto-wrap) -> request(), not requestData().
     summary: (token: string) =>
       request<LoyaltySummary>("/loyalty/summary", { token }),
   },
 
   vouchers: {
-    list: (token: string) => request<WalletVoucher[]>("/vouchers", { token }),
+    list: async (token: string) => {
+      const res = await request<{ data: WalletVoucher[] }>("/vouchers", { token });
+      return res.data;
+    },
     redeem: (token: string, id: string | number) =>
-      request<{ message: string }>(`/vouchers/${id}/redeem`, {
+      requestData<WalletVoucher>(`/vouchers/${id}/redeem`, {
         method: "POST",
         token,
       }),
   },
 
   notifications: {
-    list: (token: string) =>
-      request<NotificationItem[]>("/notifications", { token }),
+    list: async (token: string) => {
+      const res = await request<{ data: NotificationItem[]; unread_count: number }>(
+        "/notifications",
+        { token }
+      );
+      return res.data;
+    },
     markRead: (token: string, id: string | number) =>
-      request<{ message: string }>(`/notifications/${id}/read`, {
+      requestData<NotificationItem>(`/notifications/${id}/read`, {
         method: "POST",
         token,
       }),
@@ -312,42 +351,44 @@ export const api = {
   },
 
   partner: {
+    // Hand-built plain response (no Resource auto-wrap) -> request(), not requestData().
     dashboard: (token: string) =>
       request<PartnerDashboard>("/partner/dashboard", { token }),
     bookings: (token: string) =>
-      request<Booking[]>("/partner/bookings", { token }),
+      requestData<Booking[]>("/partner/bookings", { token }),
     booking: (token: string, id: string | number) =>
-      request<Booking>(`/partner/bookings/${id}`, { token }),
+      requestData<Booking>(`/partner/bookings/${id}`, { token }),
     advanceBooking: (token: string, id: string | number) =>
-      request<Booking>(`/partner/bookings/${id}/advance`, {
+      requestData<Booking>(`/partner/bookings/${id}/advance`, {
         method: "POST",
         token,
       }),
     services: (token: string) =>
-      request<Service[]>("/partner/services", { token }),
+      requestData<Service[]>("/partner/services", { token }),
     createService: (token: string, payload: Partial<Service>) =>
-      request<Service>("/partner/services", {
+      requestData<Service>("/partner/services", {
         method: "POST",
         token,
         body: payload,
       }),
     updateService: (token: string, id: string | number, payload: Partial<Service>) =>
-      request<Service>(`/partner/services/${id}`, {
+      requestData<Service>(`/partner/services/${id}`, {
         method: "PUT",
         token,
         body: payload,
       }),
+    // DELETE returns 204 No Content — no body to unwrap.
     deleteService: (token: string, id: string | number) =>
-      request<{ message: string }>(`/partner/services/${id}`, {
+      request<null>(`/partner/services/${id}`, {
         method: "DELETE",
         token,
       }),
-    promotions: (token: string) => request<unknown[]>("/partner/promotions", { token }),
+    promotions: (token: string) => requestData<unknown[]>("/partner/promotions", { token }),
     redeemVoucher: (
       token: string,
       payload: { qr_token: string; booking_id?: string | number }
     ) =>
-      request<{ message: string }>("/partner/vouchers/redeem", {
+      requestData<WalletVoucher>("/partner/vouchers/redeem", {
         method: "POST",
         token,
         body: payload,

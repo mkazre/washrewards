@@ -177,7 +177,7 @@ export default function RewardsScreen() {
           <Text style={styles.sectionTitle}>Reward levels</Text>
           {(loyalty?.level_rows ?? []).map((lv) => (
             <View
-              key={lv.n}
+              key={lv.level}
               style={[styles.levelRow, lv.current && styles.levelRowCurrent]}
             >
               <View style={[styles.levelBadge, lv.current && styles.levelBadgeCurrent]}>
@@ -187,7 +187,7 @@ export default function RewardsScreen() {
                     lv.current && { color: colors.white },
                   ]}
                 >
-                  {lv.n}
+                  {lv.level}
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
@@ -199,7 +199,7 @@ export default function RewardsScreen() {
                     </View>
                   ) : null}
                 </View>
-                <Text style={styles.levelReward}>{lv.reward}</Text>
+                <Text style={styles.levelReward}>{lv.reward_description}</Text>
               </View>
               {lv.achieved ? (
                 <Check size={20} color={colors.green} strokeWidth={2.4} />
@@ -257,7 +257,9 @@ export default function RewardsScreen() {
             <View style={styles.modalHandle} />
             <View style={styles.modalHeaderRow}>
               <View>
-                <Text style={styles.modalTitle}>{activeVoucher?.name}</Text>
+                <Text style={styles.modalTitle}>
+                  {activeVoucher ? `R${activeVoucher.amount} Wash Voucher` : ""}
+                </Text>
                 <Text style={styles.modalSub}>Scan at the wash to redeem</Text>
               </View>
               <Pressable onPress={() => setActiveVoucher(null)} style={styles.modalClose}>
@@ -265,14 +267,22 @@ export default function RewardsScreen() {
               </Pressable>
             </View>
             <View style={styles.qrWrap}>
-              {activeVoucher ? (
+              {activeVoucher?.qr_token ? (
                 <QRCode value={activeVoucher.qr_token} size={168} />
               ) : null}
             </View>
             <Text style={styles.qrValue}>
-              Value <Text style={{ fontFamily: fonts.headingSemi, color: colors.navyDeep }}>{activeVoucher?.value}</Text>
-              {" · expires "}
-              {activeVoucher?.expiry}
+              Value <Text style={{ fontFamily: fonts.headingSemi, color: colors.navyDeep }}>R{activeVoucher?.amount}</Text>
+              {activeVoucher?.expires_at ? (
+                <>
+                  {" · expires "}
+                  {new Date(activeVoucher.expires_at).toLocaleDateString("en-ZA", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </>
+              ) : null}
             </Text>
           </View>
         </View>

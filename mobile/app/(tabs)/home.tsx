@@ -226,12 +226,12 @@ export default function HomeScreen() {
                 </Text>
                 <View style={styles.tenantAreaRow}>
                   <MapPin size={12} color={colors.placeholderText} strokeWidth={1.8} />
-                  <Text style={styles.tenantArea}>{t.area ?? "—"}</Text>
+                  <Text style={styles.tenantArea}>{t.suburb ?? t.city ?? "—"}</Text>
                 </View>
                 <View style={styles.tenantMetaRow}>
                   <View style={styles.tenantRating}>
                     <Star size={13} color={colors.gold} fill={colors.gold} />
-                    <Text style={styles.tenantRatingText}>{t.rating ?? "—"}</Text>
+                    <Text style={styles.tenantRatingText}>{t.rating_avg?.toFixed(1) ?? "—"}</Text>
                   </View>
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.tenantMeta}>
@@ -239,7 +239,7 @@ export default function HomeScreen() {
                   </Text>
                   <Text style={styles.metaDot}>·</Text>
                   <Text style={styles.tenantMeta}>
-                    from {t.price_from ? `R${t.price_from}` : "—"}
+                    from {t.from_price ? `R${t.from_price}` : "—"}
                   </Text>
                 </View>
               </View>

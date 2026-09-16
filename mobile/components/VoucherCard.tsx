@@ -9,23 +9,37 @@ interface Props {
   onShowCode?: () => void;
 }
 
+const SOURCE_LABEL: Record<WalletVoucher["source"], string> = {
+  loyalty: "Loyalty reward — redeemable at any partner",
+  promotion: "Promotion voucher",
+  admin_grant: "Bonus voucher",
+};
+
 export function VoucherCard({ voucher, onShowCode }: Props) {
+  const expiry = voucher.expires_at
+    ? new Date(voucher.expires_at).toLocaleDateString("en-ZA", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+    : null;
+
   return (
     <View style={styles.row}>
       <LinearGradient
         colors={[colors.gold, colors.goldLight]}
         style={styles.chip}
       >
-        <Text style={styles.chipText}>{voucher.value}</Text>
+        <Text style={styles.chipText}>R{voucher.amount}</Text>
       </LinearGradient>
       <View style={styles.body}>
         <Text style={styles.name} numberOfLines={1}>
-          {voucher.name}
+          R{voucher.amount} Wash Voucher
         </Text>
         <Text style={styles.desc} numberOfLines={2}>
-          {voucher.desc}
+          {SOURCE_LABEL[voucher.source]}
         </Text>
-        <Text style={styles.expiry}>Expires {voucher.expiry}</Text>
+        {expiry ? <Text style={styles.expiry}>Expires {expiry}</Text> : null}
       </View>
       <Pressable onPress={onShowCode} style={styles.action}>
         <Text style={styles.actionText}>Show code</Text>
