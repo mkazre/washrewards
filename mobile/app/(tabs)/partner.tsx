@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import {
   Building2,
   Check,
@@ -37,6 +38,7 @@ export default function PartnerScreen() {
   const hasTenant = !!user?.tenants?.length;
   const tenantName = user?.tenants?.[0]?.name ?? "Your business";
   const tenantArea = user?.tenants?.[0]?.suburb ?? user?.tenants?.[0]?.city ?? "";
+  const tenantLogoUrl = user?.tenants?.[0]?.logo_url;
 
   const load = useCallback(async () => {
     if (!token) {
@@ -105,7 +107,11 @@ export default function PartnerScreen() {
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <View style={styles.logo}>
-              <Building2 size={22} color={colors.mutedBlueGrey} strokeWidth={1.6} />
+              {tenantLogoUrl ? (
+                <Image source={{ uri: tenantLogoUrl }} style={styles.logoImg} contentFit="cover" />
+              ) : (
+                <Building2 size={22} color={colors.mutedBlueGrey} strokeWidth={1.6} />
+              )}
             </View>
             <View>
               <Text style={styles.tenantName}>{tenantName}</Text>
@@ -260,7 +266,9 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
+  logoImg: { width: "100%", height: "100%" },
   tenantName: { color: colors.white, fontFamily: fonts.headingSemi, fontSize: 17 },
   tenantSub: { color: colors.mutedBlueGrey2, fontSize: 12.5 },
   businessTag: { backgroundColor: "rgba(245,158,11,0.16)", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 },

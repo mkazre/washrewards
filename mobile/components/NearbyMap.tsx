@@ -14,10 +14,11 @@ const FALLBACK_CENTER: [number, number] = [28.0473, -26.2041]; // Johannesburg
 interface Props {
   maps: NonNullable<AppConfig["maps"]>;
   tenants: Tenant[];
+  userLocation?: { lat: number; lng: number } | null;
   onSelectTenant: (tenant: Tenant) => void;
 }
 
-export function NearbyMap({ maps, tenants, onSelectTenant }: Props) {
+export function NearbyMap({ maps, tenants, userLocation, onSelectTenant }: Props) {
   const styleUrl = useMemo(
     () =>
       `https://maps.geo.${maps.region}.amazonaws.com/maps/v0/maps/${maps.map_name}/style-descriptor?key=${maps.api_key}`,
@@ -29,17 +30,27 @@ export function NearbyMap({ maps, tenants, onSelectTenant }: Props) {
       t.latitude != null && t.longitude != null
   );
 
-  const center: [number, number] = located.length
-    ? [
-        located.reduce((sum, t) => sum + t.longitude, 0) / located.length,
-        located.reduce((sum, t) => sum + t.latitude, 0) / located.length,
-      ]
-    : FALLBACK_CENTER;
+  const center: [number, number] = userLocation
+    ? [userLocation.lng, userLocation.lat]
+    : located.length
+      ? [
+          located.reduce((sum, t) => sum + t.longitude, 0) / located.length,
+          located.reduce((sum, t) => sum + t.latitude, 0) / located.length,
+        ]
+      : FALLBACK_CENTER;
 
   return (
     <View style={styles.wrap}>
       <MapLibreGL.MapView style={styles.map} mapStyle={styleUrl} logoEnabled={false}>
         <MapLibreGL.Camera zoomLevel={11} centerCoordinate={center} />
+        {userLocation ? (
+          <MapLibreGL.PointAnnotation
+            id="user-location"
+            coordinate={[userLocation.lng, userLocation.lat]}
+          >
+            <View style={styles.userDot} />
+          </MapLibreGL.PointAnnotation>
+        ) : null}
         {located.map((tenant) => (
           <MapLibreGL.PointAnnotation
             key={String(tenant.id)}
@@ -81,5 +92,13 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: colors.blue,
+  },
+  userDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.gold,
+    borderWidth: 3,
+    borderColor: colors.white,
   },
 });

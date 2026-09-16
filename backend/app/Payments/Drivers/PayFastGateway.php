@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\PlatformSetting;
 use App\Payments\Contracts\PaymentGateway;
 use App\Payments\PaymentResult;
+use App\Payments\PaymentReturnUrls;
 use Illuminate\Support\Str;
 
 /**
@@ -31,8 +32,8 @@ class PayFastGateway implements PaymentGateway
         $fields = [
             'merchant_id' => $settings->payfast_merchant_id,
             'merchant_key' => $settings->payfast_merchant_key,
-            'return_url' => config('app.url').'/payments/payfast/return',
-            'cancel_url' => config('app.url').'/payments/payfast/cancel',
+            'return_url' => PaymentReturnUrls::success($booking->id),
+            'cancel_url' => PaymentReturnUrls::cancel($booking->id),
             'notify_url' => config('app.url').'/api/webhooks/payfast',
             'm_payment_id' => $paymentId,
             'amount' => number_format((float) $booking->total_amount, 2, '.', ''),

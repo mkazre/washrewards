@@ -4,23 +4,29 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { Car, Check, MapPin, Plus, ShieldCheck, Star, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Image } from "expo-image";
+import * as WebBrowser from "expo-web-browser";
 import { colors, fonts, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError, Service, Vehicle } from "@/lib/api";
+import { getDeviceLocation } from "@/lib/location";
 import { PillButton } from "@/components/PillButton";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
 
 const SLOTS = ["09:00", "10:30", "12:00", "14:00", "15:30", "17:00"];
-const PAY_METHODS = [
-  { id: "card", brand: "VISA", label: "Visa •••• 4827", num: "Expires 09/28" },
-  { id: "eft", brand: "EFT", label: "Instant EFT", num: "Ozow / PayFast" },
-  { id: "wallet", brand: "WR", label: "WashRewards wallet", num: "Balance R0" },
+// Only "card" and "eft" are real, backend-supported payment methods
+// (StoreBookingRequest only accepts those two) — no saved-card-on-file
+// system exists, so this deliberately doesn't show a fake card number.
+const PAY_METHODS: { id: "card" | "eft"; brand: string; label: string; num: string }[] = [
+  { id: "card", brand: "CARD", label: "Debit / Credit card", num: "You'll be redirected to pay securely" },
+  { id: "eft", brand: "EFT", label: "Instant EFT", num: "Via Ozow or PayFast" },
 ];
 
 export default function BookingScreen() {
@@ -30,6 +36,9 @@ export default function BookingScreen() {
   const tenant = bookingDraft.tenant;
 
   const [services, setServices] = useState<Service[] | null>(null);
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null | undefined>(
+    tenant?.cover_photo_url
+  );
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +47,9 @@ export default function BookingScreen() {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedPay, setSelectedPay] = useState(PAY_METHODS[0].id);
   const [submitting, setSubmitting] = useState(false);
+  const [serviceAddress, setServiceAddress] = useState("");
+
+  const isMobileWash = tenant?.type === "mobile_wash";
 
   // useFocusEffect (not a one-shot useEffect) so returning from the
   // "Add a vehicle" screen re-fetches and picks up the newly-created vehicle.
@@ -58,6 +70,7 @@ export default function BookingScreen() {
           if (cancelled) return;
           setServices(detail.services ?? []);
           setVehicle(vehicles[0] ?? null);
+          setCoverPhotoUrl(detail.cover_photo_url);
         } catch (e) {
           if (cancelled) return;
           setError(
@@ -88,23 +101,48 @@ export default function BookingScreen() {
       setConfirmError('Add a vehicle before booking — tap "Add a vehicle" above.');
       return;
     }
+    if (isMobileWash && !serviceAddress.trim()) {
+      setConfirmError("Enter the address where this mobile wash should come to you.");
+      return;
+    }
     setSubmitting(true);
     try {
       const scheduledAt = new Date();
       const [h, m] = selectedSlot.split(":").map(Number);
       scheduledAt.setHours(h, m, 0, 0);
 
+      const serviceLocation = isMobileWash ? await getDeviceLocation() : null;
+
       const booking = await api.bookings.create(token, {
         tenant_id: tenant.id,
         vehicle_id: vehicle.id,
         service_id: selectedService.id,
         scheduled_at: scheduledAt.toISOString(),
-        // "wallet" isn't a real gateway yet — treat it as card for now.
-        payment_method: selectedPay === "eft" ? "eft" : "card",
+        payment_method: selectedPay,
+        service_address: isMobileWash ? serviceAddress.trim() : undefined,
+        service_latitude: serviceLocation?.lat,
+        service_longitude: serviceLocation?.lng,
       });
       const payLabel =
         PAY_METHODS.find((p) => p.id === selectedPay)?.label ?? "Card";
-      await api.bookings.pay(token, booking.id, { payload: { method: selectedPay } });
+      const result = await api.bookings.pay(token, booking.id, { payload: { method: selectedPay } });
+
+      // A hosted-checkout gateway (PayFast/Paystack/Ozow) hands back a
+      // redirect instead of finalizing here — the booking only actually
+      // becomes paid once that gateway's webhook fires, possibly after this
+      // in-app browser session closes. So after it closes, always re-fetch
+      // the booking and trust *that*, never the redirect URL's own status.
+      if (result.redirect_url) {
+        await WebBrowser.openAuthSessionAsync(result.redirect_url, "washrewards://payment-return");
+        const fresh = await api.bookings.get(token, booking.id);
+        if (fresh.payment_status !== "paid") {
+          setConfirmError(
+            "We didn't receive confirmation that this payment completed. If you finished paying, it can take a minute to reflect — check My Bookings shortly."
+          );
+          setSubmitting(false);
+          return;
+        }
+      }
 
       setBookingDraft({
         packageName: selectedService.name,
@@ -130,6 +168,13 @@ export default function BookingScreen() {
     <View style={{ flex: 1, backgroundColor: colors.white }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
         <View style={styles.hero}>
+          {coverPhotoUrl ? (
+            <Image source={{ uri: coverPhotoUrl }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.heroFallback]}>
+              <Car size={40} color={colors.greyText2} strokeWidth={1.4} />
+            </View>
+          )}
           <Pressable
             onPress={() => router.back()}
             style={[styles.closeBtn, { top: insets.top + 16 }]}
@@ -183,6 +228,26 @@ export default function BookingScreen() {
               </>
             )}
           </Pressable>
+
+          {isMobileWash ? (
+            <>
+              <Text style={styles.sectionTitle}>Where should we wash your car?</Text>
+              <TextInput
+                value={serviceAddress}
+                onChangeText={setServiceAddress}
+                placeholder="e.g. 12 Oak Street, Sandton"
+                placeholderTextColor={colors.placeholderText}
+                style={styles.addressInput}
+                multiline
+              />
+              {tenant.travel_radius_km || tenant.travel_fee ? (
+                <Text style={styles.addressNote}>
+                  {tenant.name} travels up to {tenant.travel_radius_km ?? "—"} km
+                  {tenant.travel_fee ? ` for a R${tenant.travel_fee} travel fee` : ""}.
+                </Text>
+              ) : null}
+            </>
+          ) : null}
 
           <Text style={styles.sectionTitle}>Choose a package</Text>
           {loading ? (
@@ -296,7 +361,8 @@ export default function BookingScreen() {
 }
 
 const styles = StyleSheet.create({
-  hero: { height: 196, backgroundColor: colors.greyBg3, position: "relative" },
+  hero: { height: 196, backgroundColor: colors.greyBg3, position: "relative", overflow: "hidden" },
+  heroFallback: { alignItems: "center", justifyContent: "center" },
   closeBtn: {
     position: "absolute",
     top: 16,
@@ -347,6 +413,20 @@ const styles = StyleSheet.create({
   vehicleValue: { fontFamily: fonts.headingSemi, fontSize: 14, color: colors.navyDeep },
   changeLink: { color: colors.blue, fontSize: 12.5, fontFamily: fonts.bodySemi },
   confirmError: { color: "#B91C1C", fontSize: 12.5, marginBottom: 10, textAlign: "center" },
+  addressInput: {
+    borderWidth: 1.5,
+    borderColor: colors.greyBorder,
+    borderRadius: radii.md,
+    backgroundColor: colors.greyBg,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontSize: 14,
+    fontFamily: fonts.headingMed,
+    color: colors.navyDeep,
+    minHeight: 52,
+    textAlignVertical: "top",
+  },
+  addressNote: { color: colors.placeholderText, fontSize: 11.5, marginTop: 8 },
 
   sectionTitle: { fontFamily: fonts.headingSemi, fontSize: 16, color: colors.navyDeep, marginTop: 24, marginBottom: 12 },
 

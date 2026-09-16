@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\PlatformSetting;
 use App\Payments\Contracts\PaymentGateway;
 use App\Payments\PaymentResult;
+use App\Payments\PaymentReturnUrls;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -36,7 +37,9 @@ class PaystackGateway implements PaymentGateway
                 'amount' => (int) round(((float) $booking->total_amount) * 100),
                 'currency' => 'ZAR',
                 'reference' => $reference,
-                'callback_url' => config('app.url').'/payments/paystack/return',
+                // Paystack redirects here regardless of outcome — status is
+                // determined by re-checking the booking, not this query string.
+                'callback_url' => PaymentReturnUrls::success($booking->id),
                 'metadata' => ['booking_id' => $booking->id],
             ]);
 

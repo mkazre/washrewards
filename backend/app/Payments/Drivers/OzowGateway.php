@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\PlatformSetting;
 use App\Payments\Contracts\PaymentGateway;
 use App\Payments\PaymentResult;
+use App\Payments\PaymentReturnUrls;
 use Illuminate\Support\Str;
 
 /**
@@ -37,9 +38,9 @@ class OzowGateway implements PaymentGateway
             'Amount' => number_format((float) $booking->total_amount, 2, '.', ''),
             'TransactionReference' => $reference,
             'BankReference' => 'WashRewards',
-            'CancelUrl' => config('app.url').'/payments/ozow/cancel',
-            'ErrorUrl' => config('app.url').'/payments/ozow/error',
-            'SuccessUrl' => config('app.url').'/payments/ozow/return',
+            'CancelUrl' => PaymentReturnUrls::cancel($booking->id),
+            'ErrorUrl' => PaymentReturnUrls::error($booking->id),
+            'SuccessUrl' => PaymentReturnUrls::success($booking->id),
             'NotifyUrl' => config('app.url').'/api/webhooks/ozow',
             'IsTest' => $isTest,
         ];

@@ -112,6 +112,7 @@ export interface Tenant {
   id: number | string;
   name: string;
   type?: "fixed_garage" | "mobile_wash";
+  description?: string | null;
   suburb?: string | null;
   city?: string | null;
   address?: string;
@@ -122,6 +123,10 @@ export interface Tenant {
   latitude?: number | null;
   longitude?: number | null;
   logo_url?: string | null;
+  cover_photo_url?: string | null;
+  travel_radius_km?: number | null;
+  travel_fee?: number | null;
+  opening_hours?: Record<string, string> | null;
   services?: Service[];
 }
 
@@ -337,14 +342,22 @@ export const api = {
         // booking screen maps its wallet option to "card" for now.
         payment_method: "card" | "eft";
         service_address?: string;
+        service_latitude?: number;
+        service_longitude?: number;
       }
     ) => requestData<Booking>("/bookings", { method: "POST", token, body: payload }),
     cancel: (token: string, id: string | number) =>
       requestData<Booking>(`/bookings/${id}/cancel`, { method: "POST", token }),
-    // PaymentController::pay() builds its own plain {booking, voucher_earned}
-    // response (no Resource auto-wrap) -> use request(), not requestData().
+    // PaymentController::pay() builds its own plain response (no Resource
+    // auto-wrap) -> request(), not requestData(). Hosted-checkout gateways
+    // (PayFast/Paystack/Ozow) return only { redirect_url } — the booking
+    // isn't actually paid until their webhook fires later — while the
+    // sandbox/synchronous path returns { booking, voucher_earned } directly.
     pay: (token: string, id: string | number, payload: { payload: unknown }) =>
-      request<{ booking: Booking; voucher_earned?: WalletVoucher }>(
+      request<
+        | { booking: Booking; voucher_earned?: WalletVoucher; redirect_url?: undefined }
+        | { redirect_url: string; booking?: undefined; voucher_earned?: undefined }
+      >(
         `/bookings/${id}/pay`,
         { method: "POST", token, body: payload }
       ),

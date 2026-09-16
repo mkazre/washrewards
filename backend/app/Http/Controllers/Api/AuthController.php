@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\Auth\OtpService;
 use App\Services\Auth\SocialAuthService;
@@ -45,7 +46,7 @@ class AuthController extends Controller
         $user = $this->social->findOrCreateUser($result['email'], $result['name'] ?? $validated['name'] ?? null);
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user->load('tenants')),
             'token' => $user->createToken('mobile')->plainTextToken,
         ]);
     }
@@ -82,7 +83,7 @@ class AuthController extends Controller
         $user = $this->otp->findOrCreateUser($validated['phone']);
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user->load('tenants')),
             'token' => $user->createToken('mobile')->plainTextToken,
         ]);
     }
@@ -104,7 +105,7 @@ class AuthController extends Controller
         ]);
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user->load('tenants')),
             'token' => $user->createToken('mobile')->plainTextToken,
         ], 201);
     }
@@ -125,7 +126,7 @@ class AuthController extends Controller
         $user = User::where('email', $validated['email'])->firstOrFail();
 
         return response()->json([
-            'user' => $user,
+            'user' => new UserResource($user->load('tenants')),
             'token' => $user->createToken('mobile')->plainTextToken,
         ]);
     }
@@ -139,6 +140,6 @@ class AuthController extends Controller
 
     public function me(Request $request)
     {
-        return response()->json($request->user()->load('tenants'));
+        return response()->json(new UserResource($request->user()->load('tenants')));
     }
 }

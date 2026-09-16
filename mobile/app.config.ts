@@ -42,6 +42,13 @@ const config: ExpoConfig = {
       },
     ],
     "@maplibre/maplibre-react-native",
+    [
+      "expo-location",
+      {
+        locationWhenInUsePermission:
+          "WashRewards uses your location to show car washes near you and sort them by distance.",
+      },
+    ],
   ],
   owner: "mkazre",
   extra: {

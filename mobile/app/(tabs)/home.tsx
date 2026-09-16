@@ -8,12 +8,14 @@ import {
   View,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Bell, Car, MapPin, ChevronRight, Star, Award } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, gradients, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError, Booking, Tenant, Vehicle } from "@/lib/api";
+import { getDeviceLocation } from "@/lib/location";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
 import { NearbyMap } from "@/components/NearbyMap";
@@ -30,12 +32,15 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState<"list" | "map">("list");
   const [unratedBooking, setUnratedBooking] = useState<Booking | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
     try {
+      const location = await getDeviceLocation();
+      setUserLocation(location);
       const [tenantList, vehicles] = await Promise.all([
-        api.tenants.list(token),
+        api.tenants.list(token, location?.lat, location?.lng),
         token ? api.vehicles.list(token) : Promise.resolve([]),
       ]);
       setTenants(tenantList);
@@ -231,7 +236,12 @@ export default function HomeScreen() {
           <ErrorState message={error} onRetry={load} />
         ) : view === "map" ? (
           config?.maps ? (
-            <NearbyMap maps={config.maps} tenants={tenants ?? []} onSelectTenant={openBooking} />
+            <NearbyMap
+              maps={config.maps}
+              tenants={tenants ?? []}
+              userLocation={userLocation}
+              onSelectTenant={openBooking}
+            />
           ) : (
             <View style={styles.mapPlaceholder}>
               <MapPin size={26} color={colors.blue} />
@@ -249,7 +259,11 @@ export default function HomeScreen() {
           tenants.map((t) => (
             <Pressable key={t.id} style={styles.tenantRow} onPress={() => openBooking(t)}>
               <View style={styles.tenantPhoto}>
-                <Car size={22} color={colors.greyText2} strokeWidth={1.6} />
+                {t.logo_url ? (
+                  <Image source={{ uri: t.logo_url }} style={styles.tenantPhotoImg} contentFit="cover" />
+                ) : (
+                  <Car size={22} color={colors.greyText2} strokeWidth={1.6} />
+                )}
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={styles.tenantName} numberOfLines={1}>
@@ -432,7 +446,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.greyBg3,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
+  tenantPhotoImg: { width: "100%", height: "100%" },
   tenantName: { fontFamily: fonts.headingSemi, fontSize: 15, color: colors.navyDeep },
   tenantAreaRow: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 3 },
   tenantArea: { color: colors.greyText, fontSize: 12.5 },
