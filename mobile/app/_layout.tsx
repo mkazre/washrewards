@@ -15,6 +15,8 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AppStateProvider } from "@/lib/AppState";
+import { NotificationTapHandler } from "@/components/NotificationTapHandler";
+import "@/lib/push";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -42,6 +44,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppStateProvider>
         <StatusBar style="light" />
+        <NotificationTapHandler />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />

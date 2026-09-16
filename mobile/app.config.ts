@@ -29,7 +29,20 @@ const config: ExpoConfig = {
     favicon: "./assets/favicon.png",
     bundler: "metro",
   },
-  plugins: ["expo-router", "expo-secure-store", "expo-asset"],
+  plugins: [
+    "expo-router",
+    "expo-secure-store",
+    "expo-asset",
+    "expo-apple-authentication",
+    [
+      "expo-notifications",
+      {
+        icon: "./assets/icon.png",
+        color: "#091830",
+      },
+    ],
+    "@maplibre/maplibre-react-native",
+  ],
   owner: "mkazre",
   extra: {
     apiBaseUrl:

@@ -91,4 +91,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(Voucher::class);
     }
+
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
 }

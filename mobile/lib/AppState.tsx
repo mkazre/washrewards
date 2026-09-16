@@ -9,12 +9,14 @@ import React, {
 import * as SecureStore from "expo-secure-store";
 import {
   api,
+  AppConfig,
   LoyaltySummary,
   PartnerDashboard,
   PlatformDashboard,
   Tenant,
   User,
 } from "./api";
+import { registerPushToken, unregisterPushToken } from "./push";
 
 const TOKEN_KEY = "washrewards_token";
 
@@ -25,6 +27,10 @@ interface AppStateShape {
   authLoading: boolean;
   setSession: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
+
+  // public feature flags — social login buttons, map credentials — fetched
+  // once at app start, before anyone is signed in
+  config: AppConfig | null;
 
   // cached summaries
   tenants: Tenant[] | null;
@@ -59,6 +65,8 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  const [config, setConfig] = useState<AppConfig | null>(null);
+
   const [tenants, setTenants] = useState<Tenant[] | null>(null);
   const [loyalty, setLoyalty] = useState<LoyaltySummary | null>(null);
   const [partnerDashboard, setPartnerDashboard] =
@@ -72,6 +80,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    api.config
+      .get()
+      .then(setConfig)
+      .catch(() => setConfig(null));
+  }, []);
+
+  useEffect(() => {
     (async () => {
       try {
         const stored = await SecureStore.getItemAsync(TOKEN_KEY);
@@ -80,6 +95,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
           try {
             const me = await api.auth.me(stored);
             setUser(me);
+            registerPushToken(stored);
           } catch {
             // token invalid/expired or API unreachable — fall back to logged-out state
             await SecureStore.deleteItemAsync(TOKEN_KEY);
@@ -96,11 +112,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     await SecureStore.setItemAsync(TOKEN_KEY, newToken);
     setToken(newToken);
     setUser(newUser);
+    registerPushToken(newToken);
   }, []);
 
   const logout = useCallback(async () => {
     if (token) {
       try {
+        await unregisterPushToken(token);
         await api.auth.logout(token);
       } catch {
         // best-effort; still clear local session
@@ -122,6 +140,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       authLoading,
       setSession,
       logout,
+      config,
       tenants,
       loyalty,
       partnerDashboard,
@@ -139,6 +158,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       authLoading,
       setSession,
       logout,
+      config,
       tenants,
       loyalty,
       partnerDashboard,

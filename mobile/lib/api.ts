@@ -230,6 +230,19 @@ export interface Promotion {
   is_active: boolean;
 }
 
+export interface AppConfig {
+  social_login: {
+    google: { client_id: string } | null;
+    apple: true | null;
+    facebook: { app_id: string } | null;
+  };
+  maps: {
+    map_name: string;
+    region: string | null;
+    api_key: string;
+  } | null;
+}
+
 // ---------- API surface ----------
 
 export const api = {
@@ -263,6 +276,34 @@ export const api = {
     logout: (token: string) =>
       request<{ message: string }>("/auth/logout", { method: "POST", token }),
     me: (token: string) => request<User>("/auth/me", { token }),
+    // provider is "google" | "apple" | "facebook". `token` is the provider's
+    // id_token (Google/Apple) or access_token (Facebook) from the native
+    // sign-in SDK — never a password. `name` is only used as a fallback for
+    // Apple, whose token never carries a name claim.
+    socialLogin: (provider: string, token: string, name?: string) =>
+      request<{ user: User; token: string }>(`/auth/social/${provider}`, {
+        method: "POST",
+        body: { token, name },
+      }),
+  },
+
+  config: {
+    get: () => request<AppConfig>("/config"),
+  },
+
+  pushTokens: {
+    register: (token: string, expoPushToken: string, platform: "ios" | "android") =>
+      request<{ message: string }>("/push-tokens", {
+        method: "POST",
+        token,
+        body: { expo_push_token: expoPushToken, platform },
+      }),
+    unregister: (token: string, expoPushToken: string) =>
+      request<{ message: string }>("/push-tokens", {
+        method: "DELETE",
+        token,
+        body: { expo_push_token: expoPushToken },
+      }),
   },
 
   tenants: {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Auth\OtpService;
+use App\Services\Auth\SocialAuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -12,7 +13,42 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    public function __construct(private readonly OtpService $otp) {}
+    public function __construct(
+        private readonly OtpService $otp,
+        private readonly SocialAuthService $social,
+    ) {}
+
+    /**
+     * Google/Apple/Facebook sign-in. The mobile app runs the provider's
+     * native flow itself and hands us the resulting id_token (Google/Apple)
+     * or access_token (Facebook) — this never sees the user's provider
+     * password, only a token we independently verify. `name` is optional
+     * and only used as a fallback for Apple, whose token never carries one.
+     */
+    public function socialLogin(Request $request, string $provider)
+    {
+        $validated = $request->validate([
+            'token' => ['required', 'string'],
+            'name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if (! in_array($provider, ['google', 'apple', 'facebook'], true)) {
+            return response()->json(['message' => 'Unknown sign-in provider.'], 404);
+        }
+
+        $result = $this->social->verify($provider, $validated['token']);
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['message']], 422);
+        }
+
+        $user = $this->social->findOrCreateUser($result['email'], $result['name'] ?? $validated['name'] ?? null);
+
+        return response()->json([
+            'user' => $user,
+            'token' => $user->createToken('mobile')->plainTextToken,
+        ]);
+    }
 
     /**
      * Primary mobile-app login: send a 4-digit SMS code to the given phone

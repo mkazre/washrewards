@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BookingController;
+use App\Http\Controllers\Api\ConfigController;
 use App\Http\Controllers\Api\LoyaltyController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\Partner\BookingController as PartnerBookingController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Api\Partner\ServiceController as PartnerServiceControll
 use App\Http\Controllers\Api\Partner\VoucherController as PartnerVoucherController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\Platform\DashboardController as PlatformDashboardController;
+use App\Http\Controllers\Api\PushTokenController;
 use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\VehicleController;
@@ -22,8 +24,17 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/health', fn () => response()->json(['status' => 'ok']));
 
+// Feature flags the app needs before anyone is signed in — which social
+// buttons to render, map credentials. Safe to fetch on every cold start.
+Route::get('/config', [ConfigController::class, 'index']);
+
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+
+// Google/Apple/Facebook sign-in — {provider} is one of google|apple|facebook.
+// Each is a no-op until enabled with real credentials in the admin Settings
+// page; see SocialAuthService::providerEnabled().
+Route::post('/auth/social/{provider}', [AuthController::class, 'socialLogin'])->middleware('throttle:10,1');
 
 // Primary mobile-app login. Combines sign-up + sign-in — verifyOtp() finds
 // or creates the customer by phone, so there's no separate registration step.
@@ -62,6 +73,9 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
+
+    Route::post('/push-tokens', [PushTokenController::class, 'register']);
+    Route::delete('/push-tokens', [PushTokenController::class, 'unregister']);
 
     // Partner side of the app — same account, role-based via tenant_user
     // membership. `partner` middleware requires ResolveTenant to have found one.

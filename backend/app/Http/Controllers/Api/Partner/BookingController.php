@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Partner\Concerns\AuthorizesTenantOwnership;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\BookingResource;
 use App\Models\Booking;
+use App\Notifications\AppNotification;
 use Illuminate\Http\Request;
 
 class BookingController extends Controller
@@ -54,6 +55,22 @@ class BookingController extends Controller
             'completed_at' => $next === 'completed' ? now() : null,
         ]);
 
-        return new BookingResource($booking->fresh(['user', 'service', 'vehicle']));
+        $booking = $booking->fresh(['user', 'service', 'vehicle', 'tenant']);
+
+        $message = match ($next) {
+            'checked_in' => "You've checked in at {$booking->tenant?->name} — your wash is starting.",
+            'completed' => "Your wash at {$booking->tenant?->name} is done! Don't forget to rate your experience.",
+            default => null,
+        };
+
+        if ($message) {
+            $booking->user->notify(new AppNotification(
+                $next === 'completed' ? 'Wash complete' : 'Wash in progress',
+                $message,
+                ['type' => 'booking_status', 'booking_id' => $booking->id, 'status' => $next]
+            ));
+        }
+
+        return new BookingResource($booking);
     }
 }

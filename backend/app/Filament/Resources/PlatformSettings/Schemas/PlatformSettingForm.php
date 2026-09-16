@@ -87,6 +87,88 @@ class PlatformSettingForm
                         TextInput::make('ozow_private_key')->label('Ozow private key')->password()->revealable(),
                     ]),
 
+                Section::make('Social login')
+                    ->description('Enable/disable each sign-in provider independently. A provider stays off in the app — its button is hidden entirely — until switched on here with its credentials filled in below.')
+                    ->columns(2)
+                    ->components([
+                        Toggle::make('google_login_enabled')
+                            ->label('Enable Google sign-in')
+                            ->live()
+                            ->columnSpanFull(),
+                        TextInput::make('google_client_id')
+                            ->label('Google OAuth client ID')
+                            ->helperText('From Google Cloud Console → APIs & Services → Credentials. Use the "Web application" or "iOS"/"Android" client ID matching your Expo/EAS setup.')
+                            ->columnSpanFull()
+                            ->visible(fn (callable $get) => (bool) $get('google_login_enabled')),
+
+                        Toggle::make('apple_login_enabled')
+                            ->label('Enable Apple sign-in')
+                            ->live()
+                            ->columnSpanFull(),
+                        TextInput::make('apple_client_id')
+                            ->label('Apple Services ID')
+                            ->helperText('From your Apple Developer account → Certificates, Identifiers & Profiles → Identifiers → Services IDs. This is the audience Apple\'s sign-in token is checked against.')
+                            ->visible(fn (callable $get) => (bool) $get('apple_login_enabled')),
+                        TextInput::make('apple_team_id')
+                            ->label('Apple Team ID')
+                            ->visible(fn (callable $get) => (bool) $get('apple_login_enabled')),
+                        TextInput::make('apple_key_id')
+                            ->label('Apple Key ID')
+                            ->visible(fn (callable $get) => (bool) $get('apple_login_enabled')),
+                        TextInput::make('apple_private_key')
+                            ->label('Apple private key (.p8 contents)')
+                            ->password()->revealable()
+                            ->helperText('Only needed if you later add server-to-Apple calls — sign-in verification itself uses Apple\'s public keys and doesn\'t need this.')
+                            ->columnSpanFull()
+                            ->visible(fn (callable $get) => (bool) $get('apple_login_enabled')),
+
+                        Toggle::make('facebook_login_enabled')
+                            ->label('Enable Facebook sign-in')
+                            ->live()
+                            ->columnSpanFull(),
+                        TextInput::make('facebook_app_id')
+                            ->label('Facebook App ID')
+                            ->helperText('From developers.facebook.com → your app → Settings → Basic.')
+                            ->visible(fn (callable $get) => (bool) $get('facebook_login_enabled')),
+                        TextInput::make('facebook_app_secret')
+                            ->label('Facebook App Secret')
+                            ->password()->revealable()
+                            ->visible(fn (callable $get) => (bool) $get('facebook_login_enabled')),
+                    ]),
+
+                Section::make('Maps')
+                    ->description('Powers the map view on the nearby-car-washes screen, using Amazon Location Service (billed to your AWS account, not a separate vendor). Leave off to keep the current list-count placeholder.')
+                    ->columns(2)
+                    ->components([
+                        Toggle::make('maps_enabled')
+                            ->label('Enable the map view')
+                            ->live()
+                            ->columnSpanFull(),
+                        TextInput::make('aws_location_map_name')
+                            ->label('Location Service map name')
+                            ->helperText('The Map resource name from AWS Location Service (Console or `aws location create-map`).')
+                            ->visible(fn (callable $get) => (bool) $get('maps_enabled')),
+                        TextInput::make('aws_location_region')
+                            ->label('AWS region')
+                            ->placeholder('e.g. eu-west-1')
+                            ->visible(fn (callable $get) => (bool) $get('maps_enabled')),
+                        TextInput::make('aws_location_api_key')
+                            ->label('Location Service API key')
+                            ->password()->revealable()
+                            ->helperText('A restricted, map-tile-only API key from AWS Location Service — safe to ship inside the app, same trust model as an embedded Google Maps key.')
+                            ->columnSpanFull()
+                            ->visible(fn (callable $get) => (bool) $get('maps_enabled')),
+                    ]),
+
+                Section::make('Push notifications')
+                    ->description('Push delivery runs through Expo\'s push service automatically — nothing to configure here to get started. This optional token only raises Expo\'s rate limits once you\'re sending a high volume of notifications.')
+                    ->components([
+                        TextInput::make('expo_access_token')
+                            ->label('Expo access token (optional)')
+                            ->password()->revealable()
+                            ->helperText('From expo.dev → account settings → Access Tokens.'),
+                    ]),
+
                 Section::make('Admin branding')
                     ->description('Logo and favicon shown across the admin panel.')
                     ->columns(2)

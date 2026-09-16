@@ -5,6 +5,7 @@ namespace App\Services\Payments;
 use App\Models\Booking;
 use App\Models\Transaction;
 use App\Models\Voucher;
+use App\Notifications\AppNotification;
 use App\Services\Loyalty\LoyaltyService;
 use Illuminate\Support\Facades\DB;
 
@@ -59,6 +60,32 @@ class FinalizeBookingPayment
             $voucher = $this->loyalty->checkAndIssueVoucher($booking->user, $booking);
         });
 
-        return ['booking' => $booking->fresh(), 'voucher' => $voucher, 'already_finalized' => false];
+        $booking = $booking->fresh(['tenant', 'service', 'user']);
+
+        $booking->user->notify(new AppNotification(
+            'Payment successful',
+            "Your {$booking->service?->name} at {$booking->tenant?->name} is booked and paid.",
+            ['type' => 'booking_paid', 'booking_id' => $booking->id]
+        ));
+
+        if ($voucher) {
+            $booking->user->notify(new AppNotification(
+                'You earned a voucher!',
+                "R{$voucher->amount} wash voucher added to your wallet.",
+                ['type' => 'voucher_earned', 'voucher_id' => $voucher->id]
+            ));
+        }
+
+        if ($booking->tenant) {
+            foreach ($booking->tenant->users as $partnerUser) {
+                $partnerUser->notify(new AppNotification(
+                    'New booking',
+                    "{$booking->user->name} booked {$booking->service?->name} for ".$booking->scheduled_at->format('D, H:i').'.',
+                    ['type' => 'partner_new_booking', 'booking_id' => $booking->id]
+                ));
+            }
+        }
+
+        return ['booking' => $booking, 'voucher' => $voucher, 'already_finalized' => false];
     }
 }

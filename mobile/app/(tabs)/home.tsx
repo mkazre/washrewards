@@ -16,11 +16,12 @@ import { useAppState } from "@/lib/AppState";
 import { api, ApiError, Booking, Tenant, Vehicle } from "@/lib/api";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
+import { NearbyMap } from "@/components/NearbyMap";
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, token, tenants, setTenants, loyalty, setLoyalty, setBookingDraft } =
+  const { user, token, config, tenants, setTenants, loyalty, setLoyalty, setBookingDraft } =
     useAppState();
 
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -229,12 +230,16 @@ export default function HomeScreen() {
         ) : error ? (
           <ErrorState message={error} onRetry={load} />
         ) : view === "map" ? (
-          <View style={styles.mapPlaceholder}>
-            <MapPin size={26} color={colors.blue} />
-            <Text style={styles.mapPlaceholderText}>
-              Map view · {tenants?.length ?? 0} car washes nearby
-            </Text>
-          </View>
+          config?.maps ? (
+            <NearbyMap maps={config.maps} tenants={tenants ?? []} onSelectTenant={openBooking} />
+          ) : (
+            <View style={styles.mapPlaceholder}>
+              <MapPin size={26} color={colors.blue} />
+              <Text style={styles.mapPlaceholderText}>
+                Map view · {tenants?.length ?? 0} car washes nearby
+              </Text>
+            </View>
+          )
         ) : !tenants || tenants.length === 0 ? (
           <EmptyState
             title="No car washes found nearby"

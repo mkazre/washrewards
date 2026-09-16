@@ -30,6 +30,21 @@ class PlatformSetting extends Model
         'ozow_site_code',
         'ozow_private_key',
         'ozow_api_key',
+        'google_login_enabled',
+        'google_client_id',
+        'apple_login_enabled',
+        'apple_client_id',
+        'apple_team_id',
+        'apple_key_id',
+        'apple_private_key',
+        'facebook_login_enabled',
+        'facebook_app_id',
+        'facebook_app_secret',
+        'maps_enabled',
+        'aws_location_map_name',
+        'aws_location_region',
+        'aws_location_api_key',
+        'expo_access_token',
     ];
 
     /**
@@ -59,6 +74,14 @@ class PlatformSetting extends Model
             'ozow_site_code' => 'encrypted',
             'ozow_private_key' => 'encrypted',
             'ozow_api_key' => 'encrypted',
+            'google_login_enabled' => 'boolean',
+            'apple_login_enabled' => 'boolean',
+            'apple_private_key' => 'encrypted',
+            'facebook_login_enabled' => 'boolean',
+            'facebook_app_secret' => 'encrypted',
+            'maps_enabled' => 'boolean',
+            'aws_location_api_key' => 'encrypted',
+            'expo_access_token' => 'encrypted',
         ];
     }
 
@@ -102,6 +125,35 @@ class PlatformSetting extends Model
     public static function current(): self
     {
         return static::query()->firstOrCreate([]);
+    }
+
+    /**
+     * Feature flags + non-secret client config the mobile app needs before
+     * login — which social buttons to render, and how to draw the map.
+     * Never includes gateway/SMS credentials; the AWS Location API key here
+     * is a read-only, tile-scoped key meant to ship inside client apps (the
+     * same trust model as an embedded Google Maps API key).
+     */
+    public function publicConfig(): array
+    {
+        return [
+            'social_login' => [
+                'google' => $this->google_login_enabled && filled($this->google_client_id)
+                    ? ['client_id' => $this->google_client_id]
+                    : null,
+                'apple' => $this->apple_login_enabled && filled($this->apple_client_id) ? true : null,
+                'facebook' => $this->facebook_login_enabled && filled($this->facebook_app_id)
+                    ? ['app_id' => $this->facebook_app_id]
+                    : null,
+            ],
+            'maps' => $this->maps_enabled && filled($this->aws_location_map_name) && filled($this->aws_location_api_key)
+                ? [
+                    'map_name' => $this->aws_location_map_name,
+                    'region' => $this->aws_location_region,
+                    'api_key' => $this->aws_location_api_key,
+                ]
+                : null,
+        ];
     }
 
     /**
