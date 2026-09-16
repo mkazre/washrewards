@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ChevronLeft, Delete } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, radii } from "@/lib/theme";
 import { api, ApiError } from "@/lib/api";
 import { useAppState } from "@/lib/AppState";
@@ -11,11 +12,13 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
 
 export default function OtpScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { phone } = useLocalSearchParams<{ phone: string }>();
   const { setSession } = useAppState();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
+  const [resending, setResending] = useState(false);
   const [seconds, setSeconds] = useState(24);
 
   useEffect(() => {
@@ -58,8 +61,23 @@ export default function OtpScreen() {
     setCode((c) => (c.length < CODE_LENGTH ? c + key : c));
   }
 
+  async function resend() {
+    if (seconds > 0 || resending) return;
+    setResending(true);
+    setError(null);
+    setCode("");
+    try {
+      await api.auth.requestOtp(`+27${phone}`);
+      setSeconds(24);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Couldn't resend the code.");
+    } finally {
+      setResending(false);
+    }
+  }
+
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { paddingTop: insets.top + 14, paddingBottom: insets.bottom + 16 }]}>
       <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={8}>
         <ChevronLeft size={20} color={colors.navyDeep} strokeWidth={2.2} />
       </Pressable>
@@ -93,8 +111,15 @@ export default function OtpScreen() {
       ) : (
         <Text style={styles.resend}>
           Didn't get it?{" "}
-          <Text style={styles.resendLink}>
-            {seconds > 0 ? `Resend in 0:${String(seconds).padStart(2, "0")}` : "Resend"}
+          <Text
+            style={[styles.resendLink, seconds > 0 && { color: colors.placeholderText2 }]}
+            onPress={resend}
+          >
+            {seconds > 0
+              ? `Resend in 0:${String(seconds).padStart(2, "0")}`
+              : resending
+                ? "Sending…"
+                : "Resend"}
           </Text>
         </Text>
       )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -6,8 +6,9 @@ import {
   Text,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
-import { Car, Check, MapPin, ShieldCheck, Star, X } from "lucide-react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import { Car, Check, MapPin, Plus, ShieldCheck, Star, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError, Service, Vehicle } from "@/lib/api";
@@ -24,6 +25,7 @@ const PAY_METHODS = [
 
 export default function BookingScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { token, bookingDraft, setBookingDraft } = useAppState();
   const tenant = bookingDraft.tenant;
 
@@ -31,33 +33,45 @@ export default function BookingScreen() {
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [selectedPay, setSelectedPay] = useState(PAY_METHODS[0].id);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    (async () => {
+  // useFocusEffect (not a one-shot useEffect) so returning from the
+  // "Add a vehicle" screen re-fetches and picks up the newly-created vehicle.
+  useFocusEffect(
+    useCallback(() => {
       if (!tenant) {
         setLoading(false);
         return;
       }
-      try {
-        const [detail, vehicles] = await Promise.all([
-          api.tenants.get(token, tenant.id),
-          token ? api.vehicles.list(token) : Promise.resolve([]),
-        ]);
-        setServices(detail.services ?? []);
-        setVehicle(vehicles[0] ?? null);
-      } catch (e) {
-        setError(
-          e instanceof ApiError ? e.message : "Couldn't load this partner's packages."
-        );
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [tenant, token]);
+      let cancelled = false;
+      setLoading(true);
+      (async () => {
+        try {
+          const [detail, vehicles] = await Promise.all([
+            api.tenants.get(token, tenant.id),
+            token ? api.vehicles.list(token) : Promise.resolve([]),
+          ]);
+          if (cancelled) return;
+          setServices(detail.services ?? []);
+          setVehicle(vehicles[0] ?? null);
+        } catch (e) {
+          if (cancelled) return;
+          setError(
+            e instanceof ApiError ? e.message : "Couldn't load this partner's packages."
+          );
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [tenant, token])
+  );
 
   if (!tenant) {
     return (
@@ -68,7 +82,12 @@ export default function BookingScreen() {
   }
 
   async function confirm() {
-    if (!token || !selectedService || !selectedSlot || !vehicle || !tenant) return;
+    if (!token || !selectedService || !selectedSlot || !tenant) return;
+    setConfirmError(null);
+    if (!vehicle) {
+      setConfirmError('Add a vehicle before booking — tap "Add a vehicle" above.');
+      return;
+    }
     setSubmitting(true);
     try {
       const scheduledAt = new Date();
@@ -97,7 +116,7 @@ export default function BookingScreen() {
       });
       router.replace("/confirmation");
     } catch (e) {
-      setError(
+      setConfirmError(
         e instanceof ApiError ? e.message : "Couldn't complete your booking. Please try again."
       );
     } finally {
@@ -111,7 +130,10 @@ export default function BookingScreen() {
     <View style={{ flex: 1, backgroundColor: colors.white }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
         <View style={styles.hero}>
-          <Pressable onPress={() => router.back()} style={styles.closeBtn}>
+          <Pressable
+            onPress={() => router.back()}
+            style={[styles.closeBtn, { top: insets.top + 16 }]}
+          >
             <X size={20} color={colors.white} strokeWidth={2} />
           </Pressable>
         </View>
@@ -134,18 +156,33 @@ export default function BookingScreen() {
             </View>
           </View>
 
-          {vehicle ? (
-            <View style={styles.vehicleRow}>
-              <Car size={20} color={colors.greyText3} strokeWidth={1.7} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.vehicleLabel}>Vehicle</Text>
-                <Text style={styles.vehicleValue}>
-                  {vehicle.name} · {vehicle.plate}
-                </Text>
-              </View>
-              <Text style={styles.changeLink}>Change</Text>
-            </View>
-          ) : null}
+          <Pressable
+            style={[styles.vehicleRow, !vehicle && styles.vehicleRowEmpty]}
+            onPress={() => router.push("/add-vehicle")}
+          >
+            {vehicle ? (
+              <>
+                <Car size={20} color={colors.greyText3} strokeWidth={1.7} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.vehicleLabel}>Vehicle</Text>
+                  <Text style={styles.vehicleValue}>
+                    {vehicle.name} · {vehicle.plate}
+                  </Text>
+                </View>
+                <Text style={styles.changeLink}>Change</Text>
+              </>
+            ) : (
+              <>
+                <Plus size={20} color={colors.blue} strokeWidth={2} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.vehicleValue, { color: colors.blue }]}>
+                    Add a vehicle
+                  </Text>
+                  <Text style={styles.vehicleLabel}>Required before you can book</Text>
+                </View>
+              </>
+            )}
+          </Pressable>
 
           <Text style={styles.sectionTitle}>Choose a package</Text>
           {loading ? (
@@ -234,7 +271,8 @@ export default function BookingScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 14 }]}>
+        {confirmError ? <Text style={styles.confirmError}>{confirmError}</Text> : null}
         <View style={styles.footerRow}>
           <View>
             <Text style={styles.footerSummary}>
@@ -304,9 +342,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     padding: 14,
   },
+  vehicleRowEmpty: { backgroundColor: colors.chipBlueBg, borderColor: colors.chipBlueBorder },
   vehicleLabel: { fontSize: 11.5, color: colors.placeholderText2 },
   vehicleValue: { fontFamily: fonts.headingSemi, fontSize: 14, color: colors.navyDeep },
   changeLink: { color: colors.blue, fontSize: 12.5, fontFamily: fonts.bodySemi },
+  confirmError: { color: "#B91C1C", fontSize: 12.5, marginBottom: 10, textAlign: "center" },
 
   sectionTitle: { fontFamily: fonts.headingSemi, fontSize: 16, color: colors.navyDeep, marginTop: 24, marginBottom: 12 },
 

@@ -10,14 +10,16 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Bell, Car, MapPin, ChevronRight, Star, Award } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, gradients, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
-import { api, ApiError, Tenant, Vehicle } from "@/lib/api";
+import { api, ApiError, Booking, Tenant, Vehicle } from "@/lib/api";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, token, tenants, setTenants, loyalty, setLoyalty, setBookingDraft } =
     useAppState();
 
@@ -26,6 +28,7 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState<"list" | "map">("list");
+  const [unratedBooking, setUnratedBooking] = useState<Booking | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -42,6 +45,15 @@ export default function HomeScreen() {
           setLoyalty(summary);
         } catch {
           // loyalty summary is secondary — home still renders without it
+        }
+        try {
+          const bookings = await api.bookings.list(token);
+          const toRate = bookings.find(
+            (b) => b.status === "completed" && b.has_review === false
+          );
+          setUnratedBooking(toRate ?? null);
+        } catch {
+          setUnratedBooking(null);
         }
       }
     } catch (e) {
@@ -66,6 +78,16 @@ export default function HomeScreen() {
     router.push("/booking");
   }
 
+  function openRating(b: Booking) {
+    setBookingDraft({
+      tenant: b.tenant,
+      packageName: b.service?.name,
+      bookingId: b.id,
+      receiptNo: b.receipt_no,
+    });
+    router.push("/rating");
+  }
+
   const washCount = loyalty?.month_washes ?? 0;
   const washTarget = 6;
   const washRemaining = Math.max(0, washTarget - (washCount % washTarget || washTarget));
@@ -77,7 +99,7 @@ export default function HomeScreen() {
       contentContainerStyle={{ paddingBottom: 24 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blue} />}
     >
-      <View style={styles.headerWrap}>
+      <View style={[styles.headerWrap, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <LinearGradient colors={gradients.blueButton} style={styles.avatar}>
@@ -159,16 +181,20 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        <Pressable style={styles.ratePrompt} onPress={() => router.push("/rating")}>
-          <View style={styles.rateIconWrap}>
-            <Star size={20} color={colors.gold} fill={colors.gold} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.rateTitle}>Rate your recent wash</Text>
-            <Text style={styles.rateSub}>Tell us how your last visit went</Text>
-          </View>
-          <ChevronRight size={20} color={colors.mutedBlueGrey3} strokeWidth={2} />
-        </Pressable>
+        {unratedBooking ? (
+          <Pressable style={styles.ratePrompt} onPress={() => openRating(unratedBooking)}>
+            <View style={styles.rateIconWrap}>
+              <Star size={20} color={colors.gold} fill={colors.gold} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rateTitle}>Rate your recent wash</Text>
+              <Text style={styles.rateSub}>
+                {unratedBooking.tenant?.name ?? "Tell us how your last visit went"}
+              </Text>
+            </View>
+            <ChevronRight size={20} color={colors.mutedBlueGrey3} strokeWidth={2} />
+          </Pressable>
+        ) : null}
       </View>
 
       <View style={styles.listWrap}>

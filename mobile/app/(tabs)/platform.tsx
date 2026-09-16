@@ -9,6 +9,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import Slider from "@react-native-community/slider";
 import { TrendingUp } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, gradients, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError } from "@/lib/api";
@@ -24,6 +25,7 @@ function fmtR(n: number) {
 }
 
 export default function PlatformScreen() {
+  const insets = useSafeAreaInsets();
   const { token, user, platformDashboard, setPlatformDashboard } = useAppState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +87,7 @@ export default function PlatformScreen() {
       contentContainerStyle={{ paddingBottom: 24 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blue} />}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.headerTitle}>Platform</Text>

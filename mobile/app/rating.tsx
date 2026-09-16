@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError } from "@/lib/api";
@@ -24,6 +25,7 @@ const CATEGORIES = [
 
 export default function RatingScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { token, bookingDraft } = useAppState();
   const [overall, setOverall] = useState(0);
   const [catRatings, setCatRatings] = useState<Record<string, number>>({});
@@ -64,7 +66,7 @@ export default function RatingScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.offWhite }}>
       <ScreenHeader title="Rate your wash" onBack={() => router.back()} />
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 32 }}>
         <View style={styles.summaryCard}>
           <Text style={styles.pkgName}>{bookingDraft.packageName ?? "Your recent wash"}</Text>
           <Text style={styles.partnerName}>{bookingDraft.tenant?.name ?? ""}</Text>

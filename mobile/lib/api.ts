@@ -131,6 +131,7 @@ export interface Vehicle {
   plate: string;
   make?: string;
   model?: string;
+  color?: string;
 }
 
 export interface Service {
@@ -151,6 +152,8 @@ export interface Booking {
   payment_status?: string;
   price?: number;
   total_amount?: number;
+  has_review?: boolean | null;
+  completed_at?: string | null;
   tenant?: Tenant;
   service?: Service;
   vehicle?: Vehicle;
@@ -213,6 +216,18 @@ export interface PlatformDashboard {
   gross_bookings_this_month: number;
   bookings_per_month: number;
   avg_commission_per_partner: number;
+}
+
+export interface Promotion {
+  id: number | string;
+  title: string;
+  description?: string | null;
+  discount_type: "percent" | "fixed";
+  discount_value: number;
+  code?: string | null;
+  starts_at: string;
+  ends_at: string;
+  is_active: boolean;
 }
 
 // ---------- API surface ----------
@@ -383,10 +398,27 @@ export const api = {
         method: "DELETE",
         token,
       }),
-    promotions: (token: string) => requestData<unknown[]>("/partner/promotions", { token }),
+    promotions: (token: string) => requestData<Promotion[]>("/partner/promotions", { token }),
+    createPromotion: (token: string, payload: Partial<Promotion>) =>
+      requestData<Promotion>("/partner/promotions", {
+        method: "POST",
+        token,
+        body: payload,
+      }),
+    updatePromotion: (token: string, id: string | number, payload: Partial<Promotion>) =>
+      requestData<Promotion>(`/partner/promotions/${id}`, {
+        method: "PUT",
+        token,
+        body: payload,
+      }),
+    deletePromotion: (token: string, id: string | number) =>
+      request<null>(`/partner/promotions/${id}`, {
+        method: "DELETE",
+        token,
+      }),
     redeemVoucher: (
       token: string,
-      payload: { qr_token: string; booking_id?: string | number }
+      payload: { code: string; booking_id?: string | number }
     ) =>
       requestData<WalletVoucher>("/partner/vouchers/redeem", {
         method: "POST",

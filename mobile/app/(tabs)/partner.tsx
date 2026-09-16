@@ -9,22 +9,25 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  BarChart3,
   Building2,
   Check,
   Settings2,
   Star,
   Tag,
+  Ticket,
 } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, gradients, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError, Booking } from "@/lib/api";
 import { StatChip } from "@/components/StatChip";
 import { SkeletonCard } from "@/components/Skeleton";
 import { ErrorState, EmptyState } from "@/components/ErrorState";
-import { PillButton } from "@/components/PillButton";
 
 export default function PartnerScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { token, user, partnerDashboard, setPartnerDashboard } = useAppState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +101,7 @@ export default function PartnerScreen() {
       contentContainerStyle={{ paddingBottom: 24 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blue} />}
     >
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <View style={styles.logo}>
@@ -217,22 +220,27 @@ export default function PartnerScreen() {
             </View>
 
             <View style={styles.actionsGrid}>
-              <Pressable style={styles.actionBtn}>
+              <Pressable
+                style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => router.push("/partner/services")}
+              >
                 <Settings2 size={20} color={colors.blue} strokeWidth={1.8} />
                 <Text style={styles.actionBtnText}>Manage services</Text>
               </Pressable>
-              <Pressable style={styles.actionBtn}>
+              <Pressable
+                style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => router.push("/partner/promotions")}
+              >
                 <Tag size={20} color={colors.gold} strokeWidth={1.8} />
                 <Text style={styles.actionBtnText}>Promotions</Text>
               </Pressable>
-            </View>
-
-            <View style={{ marginTop: 14 }}>
-              <PillButton
-                label="View Analytics"
-                variant="dark"
-                icon={<BarChart3 size={19} color={colors.gold} strokeWidth={1.9} />}
-              />
+              <Pressable
+                style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => router.push("/partner/redeem")}
+              >
+                <Ticket size={20} color={colors.green} strokeWidth={1.8} />
+                <Text style={styles.actionBtnText}>Redeem voucher</Text>
+              </Pressable>
             </View>
           </>
         )}
@@ -292,9 +300,10 @@ const styles = StyleSheet.create({
   reviewAvg: { fontFamily: fonts.heading, fontSize: 24, color: colors.navyDeep },
   reviewCount: { marginLeft: "auto", color: colors.placeholderText2, fontSize: 12 },
 
-  actionsGrid: { flexDirection: "row", gap: 12, marginTop: 20 },
+  actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginTop: 20 },
   actionBtn: {
-    flex: 1,
+    flexBasis: "47%",
+    flexGrow: 1,
     backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.greyBorder,

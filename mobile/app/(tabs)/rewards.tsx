@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import QRCode from "react-native-qrcode-svg";
 import { Check, Gift, Lock, X } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, gradients, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError, Booking, WalletVoucher } from "@/lib/api";
@@ -19,6 +20,7 @@ import { ErrorState, EmptyState } from "@/components/ErrorState";
 import { VoucherCard } from "@/components/VoucherCard";
 
 export default function RewardsScreen() {
+  const insets = useSafeAreaInsets();
   const { token, loyalty, setLoyalty } = useAppState();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,10 @@ export default function RewardsScreen() {
 
   if (loading) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: colors.offWhite }} contentContainerStyle={{ padding: 22 }}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: colors.offWhite }}
+        contentContainerStyle={{ padding: 22, paddingTop: insets.top + 22 }}
+      >
         <SkeletonCard />
         <SkeletonCard />
         <SkeletonCard />
@@ -88,7 +93,7 @@ export default function RewardsScreen() {
         contentContainerStyle={{ paddingBottom: 24 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.blue} />}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <View style={styles.headerRow}>
             <Text style={styles.headerTitle}>Rewards</Text>
             <LinearGradient colors={gradients.goldButton} style={styles.levelPill}>
@@ -135,9 +140,10 @@ export default function RewardsScreen() {
                 </Text>
               </View>
             </View>
-            <Pressable style={styles.rewardBtn}>
-              <Text style={styles.rewardBtnText}>Generate voucher</Text>
-            </Pressable>
+            <Text style={styles.rewardNote}>
+              Vouchers are issued automatically once you complete enough
+              paid washes — no need to claim them.
+            </Text>
           </LinearGradient>
 
           <Text style={styles.sectionTitle}>Your vouchers</Text>
@@ -321,14 +327,7 @@ const styles = StyleSheet.create({
   rewardIcon: { width: 46, height: 46, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   rewardTitle: { color: colors.white, fontFamily: fonts.headingSemi, fontSize: 16 },
   rewardSub: { color: colors.mutedBlueGrey, fontSize: 12.5, marginTop: 3 },
-  rewardBtn: {
-    marginTop: 16,
-    backgroundColor: colors.gold,
-    borderRadius: 13,
-    paddingVertical: 13,
-    alignItems: "center",
-  },
-  rewardBtnText: { color: colors.navy, fontFamily: fonts.heading, fontSize: 14.5 },
+  rewardNote: { marginTop: 14, color: "#C6D2E8", fontSize: 12, lineHeight: 17 },
 
   progressPanel: { borderRadius: radii.xl, padding: 18, overflow: "hidden", ...shadow.cardLift },
   progressPanelRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },

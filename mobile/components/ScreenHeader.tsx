@@ -2,6 +2,7 @@ import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { ChevronLeft } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts } from "@/lib/theme";
 
 interface Props {
@@ -13,8 +14,9 @@ interface Props {
 /** Compact navy back-header used on modal-presented screens (OTP, Notifications, Rating). */
 export function ScreenHeader({ title, onBack, right }: Props) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, { paddingTop: insets.top + 10 }]}>
       <Pressable
         onPress={onBack ?? (() => router.back())}
         style={styles.backBtn}

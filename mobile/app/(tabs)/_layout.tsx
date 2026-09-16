@@ -1,8 +1,11 @@
 import { Tabs } from "expo-router";
 import { Home, Gift, Briefcase, LineChart } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts } from "@/lib/theme";
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -12,9 +15,9 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: colors.white,
           borderTopColor: colors.greyBorderLight2,
-          height: 84,
+          height: 62 + insets.bottom,
           paddingTop: 10,
-          paddingBottom: 22,
+          paddingBottom: Math.max(10, insets.bottom),
         },
         tabBarLabelStyle: {
           fontFamily: fonts.headingSemi,

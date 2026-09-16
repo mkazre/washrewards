@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Bell, Check } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, radii, shadow } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { api, ApiError, NotificationItem } from "@/lib/api";
@@ -18,6 +19,7 @@ import { ErrorState, EmptyState } from "@/components/ErrorState";
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { token } = useAppState();
   const [items, setItems] = useState<NotificationItem[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,16 @@ export default function NotificationsScreen() {
     }
   }
 
+  async function markRead(id: string | number) {
+    if (!token) return;
+    setItems((prev) => prev?.map((n) => (n.id === id ? { ...n, read: true } : n)) ?? prev);
+    try {
+      await api.notifications.markRead(token, id);
+    } catch {
+      // best-effort — local state already updated optimistically
+    }
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.offWhite }}>
       <ScreenHeader
@@ -67,7 +79,7 @@ export default function NotificationsScreen() {
         }
       />
       <ScrollView
-        contentContainerStyle={{ padding: 20 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 20 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -94,7 +106,11 @@ export default function NotificationsScreen() {
           />
         ) : (
           items.map((n) => (
-            <View key={n.id} style={styles.row}>
+            <Pressable
+              key={n.id}
+              style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
+              onPress={() => !n.read && markRead(n.id)}
+            >
               <View style={styles.iconWrap}>
                 {n.read ? (
                   <Check size={19} color={colors.greyText3} strokeWidth={2} />
@@ -112,7 +128,7 @@ export default function NotificationsScreen() {
                 </Text>
               </View>
               {!n.read ? <View style={styles.unreadDot} /> : null}
-            </View>
+            </Pressable>
           ))
         )}
       </ScrollView>

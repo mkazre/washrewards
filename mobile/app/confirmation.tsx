@@ -2,12 +2,14 @@ import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { Check } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, radii } from "@/lib/theme";
 import { useAppState } from "@/lib/AppState";
 import { PillButton } from "@/components/PillButton";
 
 export default function ConfirmationScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { bookingDraft, setBookingDraft } = useAppState();
 
   const rows: [string, string][] = [
@@ -32,7 +34,12 @@ export default function ConfirmationScreen() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.wrap,
+        { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 28 },
+      ]}
+    >
       <View style={styles.checkOuter}>
         <View style={styles.checkRing} />
         <View style={styles.checkCircle}>

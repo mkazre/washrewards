@@ -11,12 +11,14 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Car } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts, gradients, radii } from "@/lib/theme";
 import { PillButton } from "@/components/PillButton";
 import { api, ApiError } from "@/lib/api";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,11 +36,8 @@ export default function LoginScreen() {
       await api.auth.requestOtp(fullPhone);
       router.push({ pathname: "/(auth)/otp", params: { phone } });
     } catch (e) {
-      // Even if the API is unreachable, let the user proceed to the OTP
-      // screen so the flow can still be exercised/tested end-to-end.
       const message = e instanceof ApiError ? e.message : "Couldn't reach the server.";
       setError(message);
-      router.push({ pathname: "/(auth)/otp", params: { phone } });
     } finally {
       setLoading(false);
     }
@@ -49,7 +48,13 @@ export default function LoginScreen() {
       style={{ flex: 1, backgroundColor: colors.white }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[
+          styles.wrap,
+          { paddingTop: insets.top + 22, paddingBottom: insets.bottom + 30 },
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
         <LinearGradient colors={gradients.blueButton} style={styles.logo}>
           <Car size={30} color={colors.white} strokeWidth={1.7} />
         </LinearGradient>
@@ -81,23 +86,10 @@ export default function LoginScreen() {
           <PillButton label="Send OTP" onPress={sendOtp} loading={loading} />
         </View>
 
-        <View style={styles.dividerRow}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or continue with</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <View style={styles.socialRow}>
-          <View style={[styles.socialBtn, { borderColor: colors.greyBorder }]}>
-            <Text style={styles.socialGlyph}>G</Text>
-          </View>
-          <View style={[styles.socialBtn, { backgroundColor: colors.navy, borderColor: colors.navy }]}>
-            <Text style={[styles.socialGlyph, { color: colors.white }]}></Text>
-          </View>
-          <View style={[styles.socialBtn, { backgroundColor: "#1877F2", borderColor: "#1877F2" }]}>
-            <Text style={[styles.socialGlyph, { color: colors.white }]}>f</Text>
-          </View>
-        </View>
+        {/* Social sign-in (Google/Apple/Facebook) isn't implemented yet — it
+            needs real OAuth app registrations, which requires decisions and
+            credentials only the business can provide. Removed rather than
+            shown as fake, non-functional buttons. */}
 
         <View style={{ flex: 1, minHeight: 20 }} />
         <Text style={styles.terms}>
