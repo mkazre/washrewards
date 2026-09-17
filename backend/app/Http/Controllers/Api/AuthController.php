@@ -11,6 +11,7 @@ use App\Services\Auth\SocialAuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
@@ -150,5 +151,33 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json(new UserResource($request->user()->load('tenants')));
+    }
+
+    /**
+     * Anonymizes the account rather than hard-deleting it — bookings,
+     * transactions, vouchers and reviews stay intact (they're financial/
+     * business records the platform and other users still need), but every
+     * personally-identifying field is scrubbed and every session revoked
+     * immediately. Phone/email are nulled/randomised rather than left as-is
+     * so the same number can be reused for a fresh account later — OTP
+     * login is phone-keyed, so leaving it in place would permanently lock
+     * that number out.
+     */
+    public function destroy(Request $request)
+    {
+        $user = $request->user();
+
+        $user->tenants()->detach();
+        $user->tokens()->delete();
+
+        $user->update([
+            'name' => 'Deleted user',
+            'email' => 'deleted-'.$user->id.'-'.Str::random(8).'@deleted.washrewards.co.za',
+            'phone' => null,
+            'password' => Hash::make(Str::random(40)),
+            'is_admin' => false,
+        ]);
+
+        return response()->json(['message' => 'Your account has been deleted.']);
     }
 }

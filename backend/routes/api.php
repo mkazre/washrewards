@@ -55,6 +55,7 @@ Route::post('/webhooks/ozow', OzowWebhookController::class);
 Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::delete('/auth/me', [AuthController::class, 'destroy']);
 
     Route::apiResource('vehicles', VehicleController::class);
 

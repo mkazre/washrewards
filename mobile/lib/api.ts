@@ -154,11 +154,17 @@ export interface Booking {
   receipt_no?: string;
   scheduled_at: string;
   status: string;
-  payment_status?: string;
+  service_address?: string | null;
   price?: number;
+  travel_fee?: number;
   total_amount?: number;
+  payment_status?: string;
+  payment_method?: string;
   has_review?: boolean | null;
+  checked_in_at?: string | null;
   completed_at?: string | null;
+  cancelled_at?: string | null;
+  created_at?: string;
   tenant?: Tenant;
   service?: Service;
   vehicle?: Vehicle;
@@ -285,6 +291,8 @@ export const api = {
     logout: (token: string) =>
       request<{ message: string }>("/auth/logout", { method: "POST", token }),
     me: (token: string) => request<User>("/auth/me", { token }),
+    deleteAccount: (token: string) =>
+      request<{ message: string }>("/auth/me", { method: "DELETE", token }),
     // provider is "google" | "apple" | "facebook". `token` is the provider's
     // id_token (Google/Apple) or access_token (Facebook) from the native
     // sign-in SDK — never a password. `name` is only used as a fallback for

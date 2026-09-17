@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import QRCode from "react-native-qrcode-svg";
 import { Check, Gift, Lock, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,6 +22,7 @@ import { VoucherCard } from "@/components/VoucherCard";
 import { AppLogo } from "@/components/AppLogo";
 
 export default function RewardsScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { token, loyalty, setLoyalty } = useAppState();
   const [loading, setLoading] = useState(true);
@@ -226,12 +228,15 @@ export default function RewardsScreen() {
           <View style={styles.activityCard}>
             {activity && activity.length > 0 ? (
               activity.map((b, i) => (
-                <View
+                <Pressable
                   key={b.id}
                   style={[
                     styles.activityRow,
                     i === activity.length - 1 && { borderBottomWidth: 0 },
                   ]}
+                  onPress={() =>
+                    router.push({ pathname: "/booking-detail", params: { id: String(b.id) } })
+                  }
                 >
                   <View style={styles.activityIcon}>
                     <Gift size={18} color={colors.greyText3} strokeWidth={1.7} />
@@ -245,7 +250,7 @@ export default function RewardsScreen() {
                   <Text style={styles.activityAmount}>
                     {b.price ? `R${b.price}` : ""}
                   </Text>
-                </View>
+                </Pressable>
               ))
             ) : (
               <View style={{ padding: 16 }}>

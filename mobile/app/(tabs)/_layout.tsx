@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Home, Gift, Briefcase, LineChart } from "lucide-react-native";
+import { Home, Gift, Briefcase, LineChart, CircleUserRound } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fonts } from "@/lib/theme";
 
@@ -58,6 +58,15 @@ export default function TabsLayout() {
           title: "Platform",
           tabBarIcon: ({ color, size }) => (
             <LineChart size={size ?? 23} color={color} strokeWidth={1.8} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: "Account",
+          tabBarIcon: ({ color, size }) => (
+            <CircleUserRound size={size ?? 23} color={color} strokeWidth={1.8} />
           ),
         }}
       />
