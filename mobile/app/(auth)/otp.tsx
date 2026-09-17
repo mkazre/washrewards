@@ -14,19 +14,30 @@ const KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
 export default function OtpScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { phone, debugCode } = useLocalSearchParams<{ phone: string; debugCode?: string }>();
   const { setSession } = useAppState();
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [seconds, setSeconds] = useState(24);
+  // Only ever set while the admin's OTP delivery is on Sandbox — see
+  // AuthController::requestOtp(). Nothing was actually texted in that mode,
+  // so auto-filling here just saves a CloudWatch round-trip while testing.
+  const [autofilled, setAutofilled] = useState(!!debugCode);
 
   useEffect(() => {
     if (seconds <= 0) return;
     const t = setTimeout(() => setSeconds((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [seconds]);
+
+  useEffect(() => {
+    if (debugCode && debugCode.length === CODE_LENGTH) {
+      setCode(debugCode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debugCode]);
 
   useEffect(() => {
     if (code.length === CODE_LENGTH) verify();
@@ -68,8 +79,12 @@ export default function OtpScreen() {
     setError(null);
     setCode("");
     try {
-      await api.auth.requestOtp(`+27${phone}`);
+      const res = await api.auth.requestOtp(`+27${phone}`);
       setSeconds(24);
+      if (res.debug_code) {
+        setAutofilled(true);
+        setCode(res.debug_code);
+      }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Couldn't resend the code.");
     } finally {
@@ -91,6 +106,14 @@ export default function OtpScreen() {
         Enter the 4-digit PIN sent to{" "}
         <Text style={styles.phoneBold}>+27 {phone}</Text>
       </Text>
+
+      {autofilled ? (
+        <View style={styles.sandboxTag}>
+          <Text style={styles.sandboxTagText}>
+            Sandbox mode — no SMS was sent, code filled in automatically
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.boxRow}>
         {Array.from({ length: CODE_LENGTH }).map((_, i) => {
@@ -171,6 +194,14 @@ const styles = StyleSheet.create({
   },
   subtitle: { marginTop: 6, color: colors.greyText, fontSize: 14, lineHeight: 20 },
   phoneBold: { color: colors.navyDeep, fontFamily: fonts.headingSemi },
+  sandboxTag: {
+    marginTop: 14,
+    backgroundColor: "#FEF3DC",
+    borderRadius: radii.md,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+  },
+  sandboxTagText: { color: colors.amberText2, fontSize: 12, fontFamily: fonts.headingMed },
   boxRow: { flexDirection: "row", gap: 12, marginTop: 28 },
   box: {
     flex: 1,

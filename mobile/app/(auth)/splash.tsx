@@ -17,6 +17,10 @@ import { colors, fonts, gradients, radii } from "@/lib/theme";
 import { PillButton } from "@/components/PillButton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+// The pager sits inside `wrap`'s 34px side padding, so its actual on-screen
+// width — and therefore both the page-to-page scroll distance and each
+// slide's own width — is the screen width minus that padding on both sides.
+const PAGE_WIDTH = SCREEN_WIDTH - 68;
 
 const SLIDES = [
   {
@@ -57,11 +61,11 @@ export default function SplashScreenView() {
       goToLogin();
       return;
     }
-    scrollRef.current?.scrollTo({ x: (index + 1) * SCREEN_WIDTH, animated: true });
+    scrollRef.current?.scrollTo({ x: (index + 1) * PAGE_WIDTH, animated: true });
   }
 
   function onMomentumScrollEnd(e: NativeSyntheticEvent<NativeScrollEvent>) {
-    const page = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+    const page = Math.round(e.nativeEvent.contentOffset.x / PAGE_WIDTH);
     setIndex(page);
   }
 
@@ -88,12 +92,12 @@ export default function SplashScreenView() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={onMomentumScrollEnd}
-        style={styles.pager}
+        style={[styles.pager, { width: PAGE_WIDTH }]}
       >
         {SLIDES.map((slide, i) => {
           const Icon = slide.icon;
           return (
-            <View key={i} style={[styles.slide, { width: SCREEN_WIDTH - 68 }]}>
+            <View key={i} style={[styles.slide, { width: PAGE_WIDTH }]}>
               <View style={styles.iconWrap}>
                 <Icon size={34} color={colors.gold} strokeWidth={1.7} />
               </View>

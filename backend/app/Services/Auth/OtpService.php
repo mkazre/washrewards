@@ -21,7 +21,13 @@ class OtpService
 
     public function __construct(private readonly SmsSender $sms) {}
 
-    public function request(string $phone): void
+    /**
+     * Returns the generated code so the caller can decide whether it's safe
+     * to hand back to the client — see AuthController::requestOtp(), which
+     * only ever does that while the sandbox driver is active (nothing was
+     * actually texted, so there's nothing to leak by echoing it back).
+     */
+    public function request(string $phone): string
     {
         $code = (string) random_int(1000, 9999);
 
@@ -36,6 +42,8 @@ class OtpService
         );
 
         $this->sms->send($phone, "Your WashRewards SA verification code is {$code}. It expires in ".self::EXPIRY_MINUTES.' minutes.');
+
+        return $code;
     }
 
     /**

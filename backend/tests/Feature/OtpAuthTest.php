@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\OtpCode;
+use App\Models\PlatformSetting;
 use App\Models\User;
 use App\Sms\Contracts\SmsSender;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -78,5 +79,31 @@ class OtpAuthTest extends TestCase
     {
         $this->postJson('/api/auth/otp/verify', ['phone' => '+27825550199', 'code' => '1234'])
             ->assertStatus(422);
+    }
+
+    public function test_sandbox_mode_echoes_the_code_back_so_testers_can_log_in_without_cloudwatch(): void
+    {
+        PlatformSetting::create(['sms_driver' => 'sandbox']);
+
+        $response = $this->postJson('/api/auth/otp/request', ['phone' => '+27825550142']);
+
+        $response->assertOk();
+        $debugCode = $response->json('debug_code');
+        $this->assertNotNull($debugCode);
+        $this->assertMatchesRegularExpression('/^\d{4}$/', $debugCode);
+
+        $this->postJson('/api/auth/otp/verify', ['phone' => '+27825550142', 'code' => $debugCode])
+            ->assertOk();
+    }
+
+    public function test_a_real_sms_driver_never_echoes_the_code_back(): void
+    {
+        PlatformSetting::create(['sms_driver' => 'sns']);
+        $this->captureSentSms();
+
+        $response = $this->postJson('/api/auth/otp/request', ['phone' => '+27825550142']);
+
+        $response->assertOk();
+        $this->assertNull($response->json('debug_code'));
     }
 }

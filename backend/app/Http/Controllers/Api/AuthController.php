@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Models\PlatformSetting;
 use App\Models\User;
 use App\Services\Auth\OtpService;
 use App\Services\Auth\SocialAuthService;
@@ -62,9 +63,17 @@ class AuthController extends Controller
             'phone' => ['required', 'string', 'max:32'],
         ]);
 
-        $this->otp->request($validated['phone']);
+        $code = $this->otp->request($validated['phone']);
 
-        return response()->json(['message' => 'A verification code has been sent.']);
+        return response()->json([
+            'message' => 'A verification code has been sent.',
+            // Only ever present while the Sandbox driver is active (Settings
+            // → OTP delivery) — nothing was actually texted in that mode, so
+            // there's nothing sensitive to leak, and it lets the app skip a
+            // real phone/CloudWatch round-trip while testing. Real SNS sends
+            // never include this.
+            'debug_code' => PlatformSetting::effectiveSmsDriver() === 'sandbox' ? $code : null,
+        ]);
     }
 
     public function verifyOtp(Request $request)

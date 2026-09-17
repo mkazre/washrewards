@@ -68,8 +68,11 @@ export default function LoginScreen() {
     setLoading(true);
     setError(null);
     try {
-      await api.auth.requestOtp(fullPhone);
-      router.push({ pathname: "/(auth)/otp", params: { phone } });
+      const res = await api.auth.requestOtp(fullPhone);
+      router.push({
+        pathname: "/(auth)/otp",
+        params: { phone, debugCode: res.debug_code ?? "" },
+      });
     } catch (e) {
       const message = e instanceof ApiError ? e.message : "Couldn't reach the server.";
       setError(message);

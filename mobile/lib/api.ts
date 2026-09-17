@@ -252,8 +252,12 @@ export interface AppConfig {
 
 export const api = {
   auth: {
+    // debug_code is only ever populated while the admin's OTP delivery is
+    // set to Sandbox (nothing was actually texted in that mode) — lets the
+    // OTP screen auto-fill instead of needing CloudWatch. Always null for a
+    // real SMS driver.
     requestOtp: (phone: string) =>
-      request<{ message: string }>("/auth/otp/request", {
+      request<{ message: string; debug_code: string | null }>("/auth/otp/request", {
         method: "POST",
         body: { phone },
       }),
